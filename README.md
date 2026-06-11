@@ -2,109 +2,75 @@
 
 [English](#english) | [中文](#中文)
 
-<img src="electron/icon.png" width="128" height="128" alt="Claude Manage Icon">
+<img src="electron/icon.png" width="128" height="128" alt="">
 
 ---
 
 ## English
 
-A local desktop GUI application for viewing and managing all Claude Code components on your machine: Skills, Plugins, MCP Servers, Hooks, CLAUDE.md, and Memory files.
+Claude Manage is a desktop app that gives you a single place to browse, toggle, and edit every piece of your Claude Code setup. If you have ever dug through `~/.claude/` by hand trying to remember which skill you disabled last week, this is for you.
 
-### Features
+It reads what is already on your machine. Nothing leaves your computer unless you opt into translation.
 
-| Page | Description |
-|------|-------------|
-| **Dashboard** | At-a-glance component statistics |
-| **Skills** | Browse / enable-disable / delete / import from GitHub URL |
-| **Plugins** | Browse by marketplace with version info |
-| **MCP** | Server list + raw JSON configuration editor |
-| **Hooks** | Event-grouped hook viewer |
-| **CLAUDE.md** | Multi-file editor for project and global config files |
-| **Memory** | View and delete memory files |
-| **Settings** | 4 visual themes + Baidu Translate API configuration |
+### What it handles
 
-**Theme System:**
-- **OLED Dark** — Pure `#0a0a0a` background, blue `#58a6ff` accent
-- **Clean White** — Light professional theme
-- **Glass Light** — Frosted glass with `backdrop-filter: blur()`
-- **Glass Dark** — Dark frosted glass with `backdrop-filter: blur()`
+**Skills** are where most of the time goes. The split-pane layout shows your full list on the left and everything about the selected skill on the right: its description, trigger keywords, invocation path, and every file under it. Click a skill to auto-translate its English description into Chinese (you provide the Baidu API key in Settings). Import from a GitHub URL with one click. Enable or disable a skill by toggling its `SKILL.md` file.
 
-**Translation:** Click any skill or plugin detail to auto-translate its English description to Chinese via Baidu Translate API (API key required, configured in-app).
+**Plugins** browse by marketplace. Each one shows its version, author, license, and all the skills it bundles. Translation works the same way as skills.
 
-**Keyboard shortcuts:** `Ctrl+1`~`Ctrl+8` to switch between pages.
+**MCP servers** list out with their command, type, and arguments. Hit "Edit Config" to open the raw `.mcp.json` file and tweak it directly.
 
-### Download
+**Hooks** group by event type so you can see which commands fire on `PreToolUse`, `PostToolUse`, `Notification`, and so on.
 
-Go to [Releases](https://github.com/Sisyphus776/claude-manage/releases) and download the latest `Claude-Manage-v*-portable.zip`.
+**CLAUDE.md** loads every config file the app can find: global, per-project, and RTK.md. Pick one from the sidebar and edit it live.
 
-Unzip and double-click `Claude Manage.exe` to run. No installation required.
+**Memory** shows all memory files under `~/.claude/projects/`. Click any row to read the full content.
 
-### Requirements
+**Settings** houses four visual themes:
 
-- **Windows 10+ (64-bit)**
-- Claude Code installed and configured (`~/.claude/` directory)
-- Baidu Translate API key (optional — only needed for auto-translation)
+* OLED Dark — the one the app ships with. `#0a0a0a` background, blue accent.
+* Clean White — for bright rooms.
+* Glass Light — frosted white with `backdrop-filter: blur()`. Needs a wallpaper behind it to show the effect.
+* Glass Dark — same glass treatment on a dark base.
 
-### Tech Stack
+Settings also holds the Baidu Translate API fields. The API key stays on disk at `~/.claude/.claude-manage-settings.json` and is masked when the frontend asks for it.
 
-| Layer | Technology |
-|-------|-----------|
-| Desktop Shell | Electron 33 |
-| Backend | Python 3.10+ (JSON-RPC 2.0 subprocess) |
-| Frontend | Vanilla HTML/CSS/JS, no framework |
+Pages switch with `Ctrl+1` through `Ctrl+8`.
 
-### Architecture
+### Install
 
-```
-Electron Main Process
-  ├── Spawns bridge.exe (Python, stdin/stdout JSON-RPC 2.0)
-  └── BrowserWindow (frameless, transparent)
-       ├── preload.js — contextBridge API (ccm.rpc, window controls)
-       └── renderer/index.html — all 8 pages, 4 themes, i18n
-```
+Go to [Releases](https://github.com/Sisyphus776/claude-manage/releases), download the latest portable ZIP, unzip anywhere, double-click `Claude Manage.exe`.
 
-### Build from Source
+Requires Windows 10 or later, 64-bit. Claude Code must already be set up on the machine.
 
-**Prerequisites:**
-- Node.js 18+
-- Python 3.10+
-- Python packages: `pip install pyyaml requests pillow`
+### Stack
 
-**Development:**
+| Layer | Tech |
+|-------|------|
+| Shell | Electron 33 |
+| Backend | Python 3.10+ talking JSON-RPC 2.0 over stdin/stdout |
+| Frontend | Single HTML file with inline CSS and JS. No framework, no build step. |
+
+The Python backend spawns as a child process. The frontend calls `ccm.rpc(method, params)` over Electron's IPC bridge, the main process pipes it to Python, and responses come back the same way.
+
+### Build from source
+
 ```bash
+# Prerequisites: Node.js 18+, Python 3.10+
+pip install pyyaml requests pillow
+
 cd electron
 npm install
-# Set CM_PYTHON env var if needed (defaults to 'python')
+
+# Dev mode (set CM_PYTHON env var if needed)
 node main.js
-```
 
-**Build release:**
-```bash
-# 1. Build Python backend
-cd electron
+# Package
 pyinstaller bridge.spec --distpath dist-python --workpath build-tmp --noconfirm
-
-# 2. Build Electron app
 npx electron-builder --dir
-
-# 3. Generate icon and inject
-python -c "..."  # generates icon.ico from icon.svg
-node -e "require('rcedit')..."  # injects icon into exe
-
-# 4. Create portable ZIP
-powershell Compress-Archive ...
 ```
 
-### FAQ
-
-**Q: My Baidu API key is in `~/.claude/.claude-manage-settings.json`. Will it leak?**
-A: No. That file is outside the project directory. It's never committed to git. The app reads it locally and masks it when sent to the frontend.
-
-**Q: Can I share this with others?**
-A: Yes. Zip the app directory and send it. Each user sees their own Claude configuration.
-
-**Q: Does it work on macOS/Linux?**
-A: Currently Windows-only. The Electron shell and Python backend should work cross-platform but haven't been tested.
+The icon is generated from `electron/icon.svg` via PIL and injected into the exe with `rcedit`.
 
 ### License
 
@@ -114,105 +80,69 @@ MIT © 2026 Sisyphus776
 
 ## 中文
 
-一款本地桌面 GUI 应用，用于查看和管理本机 Claude Code 全部组件：Skills、Plugins、MCP 服务器、Hooks、CLAUDE.md、Memory 文件。
+Claude Manage 是一个桌面工具，用来统一管理本机 Claude Code 的所有配置文件。不用再手动翻 `~\.claude\` 目录找某个 skill 关没关、某个 hook 绑在哪个事件上了。
 
-### 功能介绍
+它只读写你本地的 Claude 配置，不联网。唯一的例外是翻译功能，你主动点才会调百度 API。
 
-| 页面 | 说明 |
-|------|------|
-| **仪表盘** | 所有组件数量一览 |
-| **Skills** | 浏览 / 启用禁用 / 删除 / 从 GitHub URL 一键导入 |
-| **Plugins** | 按市场分组查看，显示版本和作者信息 |
-| **MCP** | 服务器列表 + 原始 JSON 配置编辑器 |
-| **Hooks** | 按事件类型分组展示 |
-| **CLAUDE.md** | 多文件编辑器，支持全局和项目级配置文件 |
-| **Memory** | 记忆文件查看与删除 |
-| **设置** | 四款主题切换 + 百度翻译 API 配置 |
+### 核心功能
 
-**四款主题：**
-- **OLED 暗色** — 纯黑底 `#0a0a0a`，蓝色 `#58a6ff` 点缀
-- **纯白** — 干净明亮的专业主题
-- **磨砂玻璃亮** — 半透明白色 + `backdrop-filter: blur()` 模糊
-- **磨砂玻璃暗** — 半透明黑色 + `backdrop-filter: blur()` 模糊
+**Skills** 占了日常使用的大头。左边是完整列表，右边展开后能看到一整个 skill 的全部信息：英文描述、中文翻译、触发词、调用路径、文件列表。点任意 skill 自动翻译描述（需在设置里配好百度翻译密钥），翻译结果本地缓存，之后秒开。GitHub 链接一键导入，启用/禁用本质就是把 `SKILL.md` 改个后缀名。
 
-**中文翻译：** 点击任意 Skill 或 Plugin 详情，自动将英文描述翻译为中文（需先在设置中配置百度翻译 API 密钥）。
+**Plugins** 按来源市场分组，能看到版本号、作者、许可证，以及它带了哪些 skill。翻译逻辑和 skills 一致。
 
-**键盘快捷键：** `Ctrl+1`~`Ctrl+8` 切换页面。
+**MCP** 列出所有服务器及其启动命令和参数。点"编辑配置"直接打开 `.mcp.json` 源文件。
 
-### 下载与使用
+**Hooks** 按事件类型归类——`PreToolUse`、`PostToolUse`、`Notification` 等——能看清不同事件上挂了哪些命令。
 
-前往 [Releases](https://github.com/Sisyphus776/claude-manage/releases) 下载最新版 `Claude-Manage-v*-portable.zip`。
+**CLAUDE.md** 自动找到所有相关文件：全局的、各项目目录下的、以及 RTK.md。侧边栏选一个，右侧编辑器直接改。
 
-解压后双击 `Claude Manage.exe` 即可运行。无需安装。
+**Memory** 扫描 `~\.claude\projects\` 下所有记忆文件，点击查看全文，支持删除。
 
-### 环境要求
+**设置** 提供四款主题：
 
-- **Windows 10 及以上（64 位）**
-- 已安装并配置 Claude Code（存在 `~\.claude\` 目录）
-- 百度翻译 API 密钥（可选 — 仅自动翻译功能需要）
+* OLED 暗色 — 默认主题，纯黑底 `#0a0a0a`，蓝色强调。
+* 纯白 — 适合亮环境。
+* 磨砂玻璃亮 — 半透明白底 + `backdrop-filter: blur()`。桌面有壁纸时效果明显。
+* 磨砂玻璃暗 — 半透明黑底，同样的毛玻璃质感。
 
-### 技术栈
+百度翻译 API 密钥也在这里配置。密钥存在 `~\.claude\.claude-manage-settings.json`，传给前端时已做掩码。
+
+页面切换用 `Ctrl+1` 到 `Ctrl+8`。
+
+### 下载
+
+去 [Releases](https://github.com/Sisyphus776/claude-manage/releases) 下载最新便携 ZIP，解压到任意位置，双击 `Claude Manage.exe`。
+
+需要 Windows 10+ 64 位，且本机已安装 Claude Code。
+
+### 技术
 
 | 层 | 技术 |
 |---|------|
 | 桌面壳 | Electron 33 |
-| 后端 | Python 3.10+ (JSON-RPC 2.0 子进程通信) |
-| 前端 | 纯 HTML/CSS/JS，无框架，零依赖 |
+| 后端 | Python 3.10+，通过 stdin/stdout 走 JSON-RPC 2.0 协议 |
+| 前端 | 单个 HTML 文件，CSS 和 JS 全部内联，零框架零构建 |
 
-### 架构
-
-```
-Electron 主进程
-  ├── 启动 bridge.exe（Python 后端，stdin/stdout JSON-RPC 2.0 协议）
-  └── BrowserWindow（无边框，透明，圆角）
-       ├── preload.js — contextBridge 安全桥接
-       └── renderer/index.html — 8 个页面 + 4 款主题 + 中英双语
-```
+Python 后端作为子进程启动，前端通过 Electron 的 IPC 桥调用 `ccm.rpc()`，主进程转发给 Python，响应原路返回。
 
 ### 源码构建
 
-**前置条件：**
-- Node.js 18+
-- Python 3.10+
-- Python 包：`pip install pyyaml requests pillow`
-
-**开发模式：**
 ```bash
+# 前置：Node.js 18+, Python 3.10+
+pip install pyyaml requests pillow
+
 cd electron
 npm install
-# 如 Python 不在 PATH 中，可设置 CM_PYTHON 环境变量
+
+# 开发模式（如 Python 不在 PATH 中，设置 CM_PYTHON 环境变量）
 node main.js
-```
 
-**发布打包：**
-```bash
-# 1. 构建 Python 后端
-cd electron
+# 打包
 pyinstaller bridge.spec --distpath dist-python --workpath build-tmp --noconfirm
-
-# 2. 构建 Electron 应用
 npx electron-builder --dir
-
-# 3. 生成图标并注入 exe
-# icon.ico 从 icon.svg 通过 PIL 渲染生成，用 rcedit 注入 exe
-
-# 4. 创建便携 ZIP
-powershell Compress-Archive ...
 ```
 
-### 常见问题
-
-**问：我的百度 API 密钥存在 `~\.claude\.claude-manage-settings.json`，会泄露吗？**
-答：不会。该文件不在项目目录内，不会被 git 提交。程序读取后传给前端时已做掩码处理。
-
-**问：可以发给别人用吗？**
-答：可以。把程序目录打包成 zip 发给对方。每个用户看到的是自己电脑上的 Claude 配置。
-
-**问：支持 macOS/Linux 吗？**
-答：目前仅 Windows。Electron 和 Python 后端本身跨平台，但未做适配测试。
-
-**问：程序会联网吗？**
-答：仅在用户主动使用翻译功能时，调用百度翻译 API。其他所有操作均为本地读写，不发送任何数据。
+应用图标由 `electron/icon.svg` 通过 PIL 渲染生成 `.ico`，再用 `rcedit` 注入 exe。
 
 ### 许可证
 
