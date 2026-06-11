@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head><meta charset="UTF-8"><title>Diag 2</title>
+<style>
+/* EXACT copy of app styles */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg-root:#0a0a0a;--bg-surface:#0f0f0f;--bg-card:#111;--bg-hover:rgba(255,255,255,0.03);--border:#1e1e1e;--border-strong:#2a2a2a;--text-primary:#e4e4e4;--text-secondary:#888;--text-muted:#555;--accent:#58a6ff;--input-bg:#0d0d0d;--sidebar-bg:#080808;--titlebar-bg:#080808;--statusbar-bg:#0a0a0a;--font-mono:Consolas,monospace}
+html,body{height:100%;overflow:hidden;background:transparent;color:var(--text-primary);font-family:"Segoe UI",system-ui,sans-serif}
+#app{height:100%;display:flex;flex-direction:column;border-radius:8px;overflow:hidden;background:var(--bg-root)}
+
+/* NORMAL textarea (no parent flex collapse) */
+.ta-normal{width:100%;height:100px;background:var(--input-bg);color:var(--text-primary);border:1px solid var(--border-strong);padding:8px;font-family:var(--font-mono);font-size:13px;caret-color:var(--accent)}
+
+.titlebar{height:36px;background:var(--titlebar-bg);border-bottom:1px solid var(--border);-webkit-app-region:drag;user-select:none;display:flex;align-items:center;padding:0 14px;font-size:11px;color:var(--text-muted);flex-shrink:0}
+.body-wrap{display:flex;flex:1;overflow:hidden}
+.sidebar{width:52px;background:var(--sidebar-bg);border-right:1px solid var(--border);flex-shrink:0}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* EXACT editor-area CSS from index.html */
+.editor-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 200px; }
+.editor-area textarea {
+  flex: 1; min-height: 200px; width: 100%; display: block;
+  background: var(--input-bg); color: var(--text-primary);
+  border: none; outline: none; padding: 16px 24px;
+  font-family: var(--font-mono); font-size: 13px; resize: none; line-height: 1.6;
+  caret-color: var(--accent);
+}
+
+/* Test variant: textarea inside non-flex parent */
+.plain-area { padding: 16px 24px; }
+.plain-area textarea {
+  width: 100%; height: 200px;
+  background: var(--input-bg); color: var(--text-primary);
+  border: 2px solid var(--accent); outline: none; padding: 8px;
+  font-family: var(--font-mono); font-size: 13px; caret-color: var(--accent);
+}
+
+.split{flex:1;display:flex;overflow:hidden}
+.skill-list-pane{width:200px;flex-shrink:0;background:var(--bg-root);border-right:1px solid var(--border)}
+.statusbar{height:26px;background:var(--statusbar-bg);border-top:1px solid var(--border);flex-shrink:0;font-size:11px;color:var(--text-muted);padding:4px 14px}
+
+.toolbar{height:44px;background:var(--bg-surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0}
+.toolbar span{font-size:15px;font-weight:600}
+
+.log{font-family:monospace;font-size:11px;color:var(--accent);margin:8px 16px}
+.section-label{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;padding:8px 16px 4px;border-bottom:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="titlebar">Claude Manage — cursor diagnostic</div>
+  <div class="body-wrap">
+    <div class="sidebar"></div>
+    <div class="main">
+      <div class="toolbar"><span>Test Page</span></div>
+
+      <!-- TEST 1: Textarea in .editor-area (EXACT app setup) -->
+      <div class="section-label">TEST 1: editor-area textarea (flex column)</div>
+      <div class="editor-area">
+        <textarea id="ta1" onfocus="log('1','FOCUS')" oninput="log('1','INPUT')" onkeydown="log('1','KEYDOWN')" onmousedown="log('1','MOUSEDOWN')">Click here and type. This textarea is inside .editor-area with flex layout, identical to the CLAUDE.md editor.</textarea>
+      </div>
+      <div class="log" id="log1">Awaiting interaction...</div>
+
+      <!-- TEST 2: Plain textarea, no flex -->
+      <div class="section-label">TEST 2: Plain textarea (no flex, explicit height)</div>
+      <div class="plain-area">
+        <textarea id="ta2" onfocus="log('2','FOCUS')" oninput="log('2','INPUT')">Same background colors, cursor color. Just plain div > textarea.</textarea>
+      </div>
+      <div class="log" id="log2">Awaiting interaction...</div>
+
+      <div class="statusbar">Watch the log lines above. Click each textarea and type.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function log(id, msg) {
+  document.getElementById('log'+id).textContent = '[' + new Date().toISOString().slice(11,19) + '] ' + msg;
+}
+// Also test: does focusing programmatically show cursor?
+setTimeout(function(){
+  var ta1 = document.getElementById('ta1');
+  ta1.focus();
+  ta1.setSelectionRange(3, 3);
+  log('1','Programmatic focus + setSelectionRange executed');
+}, 1000);
+</script>
+</body>
+</html>

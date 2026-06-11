@@ -410,16 +410,13 @@ html, body {
 .data-table tr:hover td { background: var(--bg-hover); }
 
 /* Editor */
-.editor-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.editor-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 200px; }
 .editor-area textarea {
-  flex: 1; background: var(--input-bg); color: var(--text-primary);
+  flex: 1; min-height: 200px; width: 100%; display: block;
+  background: #0d0d0d; color: #e4e4e4;
   border: none; outline: none; padding: 16px 24px;
   font-family: var(--font-mono); font-size: 13px; resize: none; line-height: 1.6;
-  caret-color: var(--accent); caret-shape: block;
-}
-.editor-area textarea[readonly] {
-  cursor: default;
-  color: var(--text-secondary);
+  caret-color: #ff6b35; caret-shape: block;
 }
 .editor-toolbar {
   display: flex; align-items: center; gap: 8px;
@@ -553,6 +550,23 @@ async function rpc(method, params) {
 /* ── Status ─────────────────────────────────────────────────────────── */
 function status(msg) { document.getElementById('status-text').textContent = msg; }
 
+/* ── Bridge Health ──────────────────────────────────────────────────── */
+function bridgeOk() {
+  return typeof window.ccm !== 'undefined' && typeof window.ccm.rpc === 'function';
+}
+function showBridgeStatus() {
+  const st = document.getElementById('status-text');
+  if (!st) return;
+  if (bridgeOk()) st.textContent = st.textContent.replace(' [CCM:?]','') + ' [CCM:OK]';
+  else st.textContent = st.textContent.replace(' [CCM:OK]','').replace(' [CCM:?]','') + ' [CCM:?]';
+  // Try a quick ping
+  if (bridgeOk()) {
+    window.ccm.rpc('dashboard.summary',{}).then(function(r){
+      if (!r || !r.result) { st.textContent = st.textContent.replace('[CCM:OK]','[CCM:DOWN]'); }
+    }).catch(function(){ st.textContent = st.textContent.replace('[CCM:OK]','[CCM:DOWN]'); });
+  }
+}
+
 /* ── Theme ───────────────────────────────────────────────────────────── */
 function applyTheme(key) {
   document.documentElement.setAttribute('data-theme', key);
@@ -586,7 +600,7 @@ function navTo(key) {
   const btn = document.querySelector(`.side-icon[data-page="${key}"]`);
   if (btn) btn.classList.add('active');
   _page = key;
-  buildPage(key);
+  buildPage(key).then(function(){ setTimeout(showBridgeStatus, 1000); });
 }
 
 document.addEventListener('keydown', e => {
@@ -604,7 +618,7 @@ async function buildPage(key) {
     case 'plugins': await buildPlugins(main); break;
     case 'mcp': await buildMcp(main); break;
     case 'hooks': await buildHooks(main); break;
-    case 'claudemd': await buildClaudeMd(main); break;
+    case 'claudemd': await buildClaudeMdEditor(main); break;
     case 'memory': await buildMemory(main); break;
     case 'settings': await buildSettings(main); break;
   }
@@ -874,8 +888,12 @@ async function buildHooks(main) {
   ).join('');
 }
 
-/* ── CLAUDE.md ──────────────────────────────────────────────────────── */
-async function buildClaudeMd(main) {
+/* ── CLAUDE.md EDITOR ────────────────────────────────────────────────── */
+let _claudeMdEditorState = 'view';  // 'view' | 'edit'
+let _claudeMdOriginalContent = '';
+let _claudeMdPath = '';
+
+async function buildClaudeMdEditor(main) {
   _data.claudemd = await rpc('claudemd.list') || [];
   main.innerHTML = `
     <div class="toolbar"><span class="page-title">${T.tr('claudemd')}</span><div class="spacer"></div>
@@ -890,9 +908,9 @@ async function buildClaudeMd(main) {
           <span id="claudemd-path">Select a file</span>
           <div class="spacer"></div>
           <span id="claudemd-indicator" class="edit-indicator view">VIEW</span>
-          <button class="btn" id="claudemd-edit-btn" onclick="toggleClaudeMdEdit()">✏ Edit</button>
-          <button class="btn primary" id="claudemd-save-btn" onclick="saveClaudeMd()" style="display:none">${T.tr('save')}</button>
-          <button class="btn" id="claudemd-cancel-btn" onclick="cancelClaudeMdEdit()" style="display:none">Cancel</button>
+          <button class="btn" id="claudemd-edit-btn">✏ Edit</button>
+          <button class="btn primary" id="claudemd-save-btn" style="display:none">${T.tr('save')}</button>
+          <button class="btn" id="claudemd-cancel-btn" style="display:none">Cancel</button>
         </div>
         <textarea id="claudemd-editor" placeholder="Select a CLAUDE.md file..." readonly></textarea>
       </div>
@@ -901,127 +919,154 @@ async function buildClaudeMd(main) {
 
   const listEl = document.getElementById('claudemd-list');
   listEl.innerHTML = _data.claudemd.map((c, i) =>
-    `<div class="skill-row" data-claudemd-idx="${i}">
+    `<div class="skill-row" data-cm-idx="${i}">
       <span class="s-name" style="flex:1">${c.label}</span>
       <span class="s-type">${c.size<1024?c.size+'B':(c.size/1024).toFixed(1)+'KB'}</span></div>`).join('');
 
-  // Event delegation — walk up to find the skill-row
+  // File selection
   listEl.addEventListener('click', function(e) {
-    let el = e.target;
+    var el = e.target;
     while (el && el !== listEl) {
-      if (el.classList && el.classList.contains('skill-row') && el.hasAttribute('data-claudemd-idx')) {
-        if (isClaudeMdDirty()) {
-          if (!confirm('Unsaved changes will be lost. Continue?')) return;
-        }
-        const idx = parseInt(el.getAttribute('data-claudemd-idx'));
+      if (el.classList && el.classList.contains('skill-row') && el.hasAttribute('data-cm-idx')) {
+        var idx = parseInt(el.getAttribute('data-cm-idx'));
         if (idx >= 0 && idx < _data.claudemd.length) {
-          openClaudeMd(idx);
+          if (_claudeMdEditorState === 'edit') {
+            if (!confirm('Unsaved changes will be lost. Continue?')) return;
+          }
+          openClaudeMdFile(idx);
         }
         return;
       }
       el = el.parentElement;
     }
   });
+
+  // Edit button (bound via both onclick and addEventListener)
+  var editBtn = document.getElementById('claudemd-edit-btn');
+  editBtn.onclick = function(){ enterEditMode(); };
+  editBtn.addEventListener('click', function(){ enterEditMode(); });
+
+  // Save button
+  var saveBtn = document.getElementById('claudemd-save-btn');
+  saveBtn.onclick = function(){ saveClaudeMd(); };
+  saveBtn.addEventListener('click', function(){ saveClaudeMd(); });
+
+  // Cancel button
+  var cancelBtn = document.getElementById('claudemd-cancel-btn');
+  cancelBtn.onclick = function(){ cancelEditMode(); };
+  cancelBtn.addEventListener('click', function(){ cancelEditMode(); });
+
+  resetEditorState();
 }
 
-let _claudemdEdited = false;
-function isClaudeMdDirty() { return _claudemdEdited; }
+function resetEditorState() {
+  _claudeMdEditorState = 'view';
+  _claudeMdOriginalContent = '';
+  _claudeMdPath = '';
+  var editor = document.getElementById('claudemd-editor');
+  if (editor) { editor.value = ''; editor.blur(); }
+  updateClaudeMdUI('view');
+}
 
-function openClaudeMd(idx) {
-  const c = _data.claudemd[idx];
+function openClaudeMdFile(idx) {
+  var c = _data.claudemd[idx];
   if (!c) return;
-  document.querySelectorAll('#claudemd-list .skill-row').forEach(r => r.classList.remove('selected'));
-  const row = document.querySelector(`#claudemd-list [data-claudemd-idx="${idx}"]`);
+  _claudeMdPath = c.path;
+  document.querySelectorAll('#claudemd-list .skill-row').forEach(function(r){r.classList.remove('selected')});
+  var row = document.querySelector('#claudemd-list [data-cm-idx="' + idx + '"]');
   if (row) row.classList.add('selected');
   document.getElementById('claudemd-path').textContent = c.path;
-  const editor = document.getElementById('claudemd-editor');
+  var editor = document.getElementById('claudemd-editor');
   editor.value = c.content;
-  // Always start in view-only mode
-  setClaudeMdMode('view');
+  _claudeMdOriginalContent = c.content;
+  updateClaudeMdUI('view');
 }
 
-function setClaudeMdMode(mode) {
-  const editor = document.getElementById('claudemd-editor');
-  const editBtn = document.getElementById('claudemd-edit-btn');
-  const saveBtn = document.getElementById('claudemd-save-btn');
-  const cancelBtn = document.getElementById('claudemd-cancel-btn');
-  const indicator = document.getElementById('claudemd-indicator');
+function updateClaudeMdUI(state) {
+  _claudeMdEditorState = state;
+  var editor = document.getElementById('claudemd-editor');
+  var editBtn = document.getElementById('claudemd-edit-btn');
+  var saveBtn = document.getElementById('claudemd-save-btn');
+  var cancelBtn = document.getElementById('claudemd-cancel-btn');
+  var indicator = document.getElementById('claudemd-indicator');
   if (!editor) return;
-  if (mode === 'edit') {
-    // CRITICAL: blur first to reset Chromium internal state for readonly textareas
-    // Without this, focus() after toggling readonly the second time silently fails.
-    editor.blur();
-    editor.readOnly = false;
-    // Force synchronous layout reflow — ensures readonly change is committed
-    void editor.offsetHeight;
+
+  if (state === 'edit') {
+    editor.style.pointerEvents = 'auto';
+    editor.style.opacity = '1';
     editBtn.style.display = 'none';
     saveBtn.style.display = '';
     cancelBtn.style.display = '';
-    indicator.textContent = 'EDIT';
-    indicator.className = 'edit-indicator edit';
-    _claudemdEdited = true;
-    // Two rAF frames guarantee paint + compositing complete before focusing
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        editor.focus();
-        editor.setSelectionRange(0, 0);
-      });
-    });
+    if (indicator) { indicator.textContent = 'EDIT'; indicator.className = 'edit-indicator edit'; }
   } else {
-    // Blur before setting readonly to reset cursor state cleanly
-    editor.blur();
-    editor.readOnly = true;
+    editor.style.pointerEvents = 'auto';  // allow clicking even in view
+    editor.style.opacity = '1';
     editBtn.style.display = '';
     saveBtn.style.display = 'none';
     cancelBtn.style.display = 'none';
-    indicator.textContent = 'VIEW';
-    indicator.className = 'edit-indicator view';
-    _claudemdEdited = false;
+    if (indicator) { indicator.textContent = 'VIEW'; indicator.className = 'edit-indicator view'; }
   }
 }
 
-function toggleClaudeMdEdit() {
-  const path = document.getElementById('claudemd-path').textContent;
-  if (!path || path === 'Select a file') { status('No file selected'); return; }
-  setClaudeMdMode('edit');
+function enterEditMode() {
+  if (!_claudeMdPath) { status('No file selected'); return; }
+  updateClaudeMdUI('edit');
+  var editor = document.getElementById('claudemd-editor');
+  if (editor) {
+    editor.readOnly = false;
+    // Force reflow then focus with selection
+    void editor.offsetHeight;
+    editor.setSelectionRange(0, 0);
+    editor.focus();
+  }
 }
 
-function cancelClaudeMdEdit() {
-  setClaudeMdMode('view');
-  const path = document.getElementById('claudemd-path').textContent;
-  const c = _data.claudemd.find(x => x.path === path);
-  if (c) document.getElementById('claudemd-editor').value = c.content;
+function cancelEditMode() {
+  var editor = document.getElementById('claudemd-editor');
+  if (editor) {
+    editor.readOnly = true;
+    editor.value = _claudeMdOriginalContent;
+    editor.blur();
+  }
+  updateClaudeMdUI('view');
 }
 
 async function saveClaudeMd() {
-  const editor = document.getElementById('claudemd-editor');
-  const pathEl = document.getElementById('claudemd-path');
-  if (!pathEl || !editor) { alert('Editor not loaded. Try switching pages and back.'); return; }
-  const path = pathEl.textContent;
-  const content = editor.value;
-  if (!path || path === 'Select a file') { alert('No file selected. Click a file in the left sidebar first.'); return; }
+  if (!_claudeMdPath) { alert('No file selected.'); return; }
+  var editor = document.getElementById('claudemd-editor');
+  if (!editor) { alert('Editor not found.'); return; }
+  var content = editor.value;
   if (typeof window.ccm === 'undefined' || typeof window.ccm.rpc !== 'function') {
     alert('Bridge not connected. Please restart the app.');
     return;
   }
   status('Saving...');
   try {
-    const ok = await rpc('claudemd.save', {path, content});
-    if (ok === true) {
-      setClaudeMdMode('view');
+    var resp = await window.ccm.rpc('claudemd.save', {path: _claudeMdPath, content: content});
+    if (resp && resp.result === true) {
+      _claudeMdOriginalContent = content;
+      var ed = document.getElementById('claudemd-editor');
+      if (ed) ed.readOnly = true;
+      updateClaudeMdUI('view');
       alert('Saved successfully.');
-      status(`Saved: ${path}`);
+      status('Saved: ' + _claudeMdPath);
       _data.claudemd = await rpc('claudemd.list') || [];
     } else {
-      const msg = (ok && ok.error && ok.error.message) || JSON.stringify(ok);
+      var msg = (resp && resp.error && resp.error.message) || JSON.stringify(resp);
       alert('Save failed\n' + msg);
-      status('Save failed: ' + msg);
+      status('Save failed');
     }
   } catch(e) {
     alert('Save error: ' + e.message);
-    status('Save error: ' + e.message);
+    status('Save error');
   }
 }
+
+// Legacy wrappers (for page routing and old onclick references)
+function openClaudeMd(idx) { openClaudeMdFile(idx); }
+function setClaudeMdMode(m) { updateClaudeMdUI(m); }
+function toggleClaudeMdEdit() { enterEditMode(); }
+function cancelClaudeMdEdit() { cancelEditMode(); }
 
 /* ── Memory ─────────────────────────────────────────────────────────── */
 async function buildMemory(main) {

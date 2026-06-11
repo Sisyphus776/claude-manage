@@ -5,6 +5,11 @@ import json
 import traceback
 from pathlib import Path
 
+# CRITICAL: Windows stdin/stdout default to system code page (GBK).
+# Reopen with UTF-8 so Chinese characters survive the pipe from Node.js.
+sys.stdin = open(sys.stdin.fileno(), 'r', encoding='utf-8', buffering=1)
+sys.stdout = open(sys.stdout.fileno(), 'w', encoding='utf-8', buffering=1, errors='replace')
+
 # Ensure project root on path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 

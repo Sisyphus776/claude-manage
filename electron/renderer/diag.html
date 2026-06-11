@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Claude Manage — Diagnostic</title>
+<style>
+  :root { --green:#3fb950; --red:#f85149; --accent:#58a6ff; --surface:#111; --border:#1e1e1e; --text:#e4e4e4; --muted:#666; }
+  body { background:#0a0a0a; color:var(--text); font-family:"Segoe UI",system-ui,sans-serif; margin:0; padding:20px; }
+  h1 { font-size:20px; margin-bottom:4px; }
+  h1 span { color:var(--accent); }
+  .sub { color:var(--muted); font-size:12px; margin-bottom:24px; }
+  .test { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:12px; }
+  .test .label { font-size:13px; font-weight:600; margin-bottom:8px; display:flex; gap:8px; align-items:center; }
+  .test .label .pass { color:var(--green); font-size:11px; }
+  .test .label .fail { color:var(--red); font-size:11px; }
+  .test .label .info { color:var(--accent); font-size:11px; }
+  .test textarea { width:100%; height:80px; background:#0d0d0d; color:#e4e4e4; border:1px solid var(--border); border-radius:4px; padding:8px; font-family:monospace; font-size:13px; resize:vertical; caret-color:var(--accent); }
+  .test input { padding:6px 12px; border-radius:4px; border:1px solid var(--border); background:#0d0d0d; color:var(--text); }
+  .test button { margin:4px 8px 4px 0; padding:6px 16px; border-radius:4px; border:1px solid #2a2a2a; background:#151515; color:#888; cursor:pointer; font-size:12px; }
+  .test button.ok { background:#1a6bff; border-color:#1a6bff; color:#fff; }
+  .test button.danger { border-color:rgba(248,81,73,0.3); color:var(--red); }
+  .log { margin-top:8px; padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; font-size:11px; font-family:monospace; max-height:200px; overflow-y:auto; white-space:pre-wrap; color:var(--muted); }
+  .log .ok { color:var(--green); }
+  .log .err { color:var(--red); }
+  .log .warn { color:#d2991d; }
+
+  /* EXACT copy of app's editor-area CSS */
+  .editor-area-clone { flex:1; display:flex; flex-direction:column; overflow:hidden; height:120px; }
+  .editor-area-clone textarea {
+    flex:1; background:#0d0d0d; color:#e4e4e4;
+    border:none; outline:none; padding:16px 24px;
+    font-family:monospace; font-size:13px; resize:none; line-height:1.6;
+    caret-color:var(--accent);
+  }
+</style>
+</head>
+<body>
+<h1><span>Claude Manage</span> — Diagnostic</h1>
+<p class="sub">Isolated tests. Results logged to visible output. No alerts, all output inline.</p>
+
+<!-- TEST A1: bare textarea -->
+<div class="test" id="test-a1">
+  <div class="label">A1 — Bare &lt;textarea&gt; <span id="a1-status" class="info">waiting...</span></div>
+  <textarea id="bare-ta" placeholder="TRY TYPING HERE. If characters appear, PASS." oninput="logResult('a1','KEY INPUT RECEIVED — PASS')" onfocus="logResult('a1','FOCUS RECEIVED')"></textarea>
+  <div class="log" id="a1-log"></div>
+</div>
+
+<!-- TEST A2: textarea inside editor-area CSS -->
+<div class="test" id="test-a2">
+  <div class="label">A2 — Textarea inside .editor-area CSS <span id="a2-status" class="info">waiting...</span></div>
+  <div class="editor-area-clone">
+    <textarea id="editor-ta" placeholder="TRY TYPING HERE. Same CSS as app." oninput="logResult('a2','KEY INPUT RECEIVED — PASS')" onfocus="logResult('a2','FOCUS RECEIVED')"></textarea>
+  </div>
+  <div class="log" id="a2-log"></div>
+</div>
+
+<!-- TEST B: onclick binding -->
+<div class="test" id="test-b">
+  <div class="label">B — Button onclick binding <span id="b-status" class="info">waiting...</span></div>
+  <button class="ok" id="btn-onclick">A: onclick property</button>
+  <button class="ok" id="btn-addevent">B: addEventListener</button>
+  <button class="ok" id="btn-both">C: both onclick+addEventListener</button>
+  <div class="log" id="b-log"></div>
+</div>
+
+<!-- TEST C: RPC chain -->
+<div class="test" id="test-c">
+  <div class="label">C — JSON-RPC chain <span id="c-status" class="info">waiting...</span></div>
+  <button class="ok" onclick="testRPC()">Run RPC Tests</button>
+  <div class="log" id="c-log"></div>
+</div>
+
+<!-- TEST D: Memory delete -->
+<div class="test" id="test-d">
+  <div class="label">D — Memory list + delete <span id="d-status" class="info">waiting...</span></div>
+  <button class="ok" onclick="testMemory()">Run Memory Tests</button>
+  <div class="log" id="d-log"></div>
+</div>
+
+<!-- TEST E: Full edit flow -->
+<div class="test" id="test-e">
+  <div class="label">E — Full Edit → Save flow <span id="e-status" class="info">waiting...</span></div>
+  <div class="editor-toolbar" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+    <span id="e-path" style="font-size:11px;color:var(--muted)">(no file)</span>
+    <div style="flex:1"></div>
+    <button class="ok" id="e-edit">Edit</button>
+    <button class="ok" id="e-save" style="display:none">Save</button>
+    <button id="e-cancel" style="display:none">Cancel</button>
+  </div>
+  <textarea id="e-editor" placeholder="File content will load here..." style="width:100%;height:120px;background:#0d0d0d;color:#e4e4e4;border:1px solid var(--border);border-radius:4px;padding:8px;font-family:monospace;font-size:13px;caret-color:var(--accent);"></textarea>
+  <div class="log" id="e-log"></div>
+</div>
+
+<script>
+// ── Logging ──────────────────────────────────────────────────────────
+function log(id, msg, cls) {
+  var el = document.getElementById(id + '-log');
+  var clsName = cls || '';
+  el.innerHTML += '<span class="' + clsName + '">[' + new Date().toISOString().slice(11,19) + '] ' + msg + '</span>\n';
+  el.scrollTop = el.scrollHeight;
+}
+function logResult(id, msg) { log(id, msg, 'ok'); }
+function logError(id, msg) { log(id, msg, 'err'); }
+
+// ── TEST B: Button binding ───────────────────────────────────────────
+(function(){
+  var counts = { onclick:0, addevent:0, both1:0, both2:0 };
+  document.getElementById('btn-onclick').onclick = function(){ counts.onclick++; log('b','onclick property fired (count='+counts.onclick+')','ok'); };
+  document.getElementById('btn-addevent').addEventListener('click', function(){ counts.addevent++; log('b','addEventListener fired (count='+counts.addevent+')','ok'); });
+  document.getElementById('btn-both').onclick = function(){ counts.both1++; log('b','both-onclick fired (count='+counts.both1+')','ok'); };
+  document.getElementById('btn-both').addEventListener('click', function(){ counts.both2++; log('b','both-addEventListener fired (count='+counts.both2+')','ok'); });
+})();
+
+// ── TEST C: RPC chain ───────────────────────────────────────────────
+async function testRPC() {
+  log('c','Starting RPC tests...','warn');
+  if (typeof window.ccm === 'undefined') { logError('c','window.ccm is UNDEFINED — NOT running in Electron!'); return; }
+  logResult('c','window.ccm exists. rpc type: ' + typeof window.ccm.rpc);
+  try {
+    var r1 = await window.ccm.rpc('dashboard.summary', {});
+    logResult('c','dashboard.summary → ' + JSON.stringify(r1).slice(0,80));
+    var r2 = await window.ccm.rpc('claudemd.list', {});
+    var c = (r2 && r2.result) || [];
+    logResult('c','claudemd.list → ' + c.length + ' files');
+    if (c.length > 0) {
+      logResult('c','First file: ' + c[0].label + ' at ' + c[0].path);
+    }
+  } catch(e) {
+    logError('c','RPC ERROR: ' + e.message);
+  }
+}
+
+// ── TEST D: Memory ──────────────────────────────────────────────────
+async function testMemory() {
+  log('d','Starting Memory tests...','warn');
+  try {
+    var r1 = await window.ccm.rpc('memory.list', {});
+    var mems = (r1 && r1.result) || [];
+    log('d','memory.list → ' + mems.length + ' files');
+    mems.forEach(function(m,i){ log('d','  ['+i+'] name=' + JSON.stringify(m.name) + ' type=' + m.memory_type); });
+    if (mems.length > 0) {
+      var target = mems[0];
+      log('d','Attempting delete: ' + JSON.stringify(target.name),'warn');
+      var r2 = await window.ccm.rpc('memory.delete', {name: target.name});
+      log('d','memory.delete result: ' + JSON.stringify(r2));
+      if (r2 && r2.result === true) {
+        logResult('d','DELETE SUCCEEDED — ' + target.name);
+      } else {
+        logError('d','DELETE RETURNED: ' + JSON.stringify(r2));
+      }
+    }
+  } catch(e) {
+    logError('d','ERROR: ' + e.message);
+  }
+}
+
+// ── TEST E: Edit → Save flow ────────────────────────────────────────
+var eState = 'view', ePath = '', eOriginal = '';
+async function eInit() {
+  log('e','Initializing: loading claudemd.list...','warn');
+  try {
+    var r = await window.ccm.rpc('claudemd.list', {});
+    var files = (r && r.result) || [];
+    if (files.length === 0) { logError('e','No CLAUDE.md files found'); return; }
+    var f = files[0];
+    ePath = f.path;
+    eOriginal = f.content || '';
+    document.getElementById('e-path').textContent = ePath;
+    document.getElementById('e-editor').value = eOriginal.slice(0, 500) + (eOriginal.length>500?'\n...(truncated)':'');
+    logResult('e','Loaded: ' + f.label + ' (' + eOriginal.length + ' chars)');
+  } catch(e) {
+    logError('e','Init error: ' + e.message);
+  }
+}
+
+document.getElementById('e-edit').onclick = function(){
+  eState = 'edit';
+  document.getElementById('e-edit').style.display = 'none';
+  document.getElementById('e-save').style.display = '';
+  document.getElementById('e-cancel').style.display = '';
+  document.getElementById('e-editor').focus();
+  logResult('e','Switched to EDIT mode. Try typing in the textarea above.');
+};
+document.getElementById('e-edit').addEventListener('click', function(){ log('e','EDIT clicked (addEventListener)'); });
+
+document.getElementById('e-save').onclick = async function(){
+  log('e','SAVE clicked. Path=' + ePath + ' Content length=' + document.getElementById('e-editor').value.length,'warn');
+  try {
+    var resp = await window.ccm.rpc('claudemd.save', {path:ePath, content:document.getElementById('e-editor').value});
+    log('e','Save response: ' + JSON.stringify(resp));
+    if (resp && resp.result === true) {
+      logResult('e','SAVE SUCCEEDED');
+      eState = 'view';
+      document.getElementById('e-edit').style.display = '';
+      document.getElementById('e-save').style.display = 'none';
+      document.getElementById('e-cancel').style.display = 'none';
+    } else {
+      logError('e','SAVE FAILED: ' + JSON.stringify(resp));
+    }
+  } catch(e) {
+    logError('e','Save error: ' + e.message);
+  }
+};
+document.getElementById('e-save').addEventListener('click', function(){ log('e','SAVE clicked (addEventListener)'); });
+
+document.getElementById('e-cancel').onclick = function(){
+  document.getElementById('e-editor').value = eOriginal;
+  eState = 'view';
+  document.getElementById('e-edit').style.display = '';
+  document.getElementById('e-save').style.display = 'none';
+  document.getElementById('e-cancel').style.display = 'none';
+  log('e','Cancelled. Content restored.');
+};
+
+// ── Init test E after page load ──────────────────────────────────────
+setTimeout(function(){
+  if (typeof window.ccm !== 'undefined') { eInit(); }
+  else { log('e','window.ccm not available. Test E requires Electron environment.'); }
+}, 500);
+
+// ── Status updaters ──────────────────────────────────────────────────
+// Watch A1 and A2 for first input
+(function(){
+  var a1done=false, a2done=false;
+  document.getElementById('bare-ta').addEventListener('keydown', function(){
+    if (!a1done) { a1done=true; document.getElementById('a1-status').className='pass'; document.getElementById('a1-status').textContent='PASS — received keyboard input'; }
+  });
+  document.getElementById('editor-ta').addEventListener('keydown', function(){
+    if (!a2done) { a2done=true; document.getElementById('a2-status').className='pass'; document.getElementById('a2-status').textContent='PASS — received keyboard input'; }
+  });
+})();
+</script>
+</body>
+</html>
