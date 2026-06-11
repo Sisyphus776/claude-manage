@@ -941,17 +941,22 @@ function setClaudeMdMode(mode) {
   const saveBtn = document.getElementById('claudemd-save-btn');
   const cancelBtn = document.getElementById('claudemd-cancel-btn');
   const indicator = document.getElementById('claudemd-indicator');
+  if (!editor) return;
   if (mode === 'edit') {
-    editor.removeAttribute('readonly');
-    editor.focus();
+    editor.readOnly = false;
     editBtn.style.display = 'none';
     saveBtn.style.display = '';
     cancelBtn.style.display = '';
     indicator.textContent = 'EDIT';
     indicator.className = 'edit-indicator edit';
     _claudemdEdited = true;
+    // Delay focus to ensure readonly removal has taken effect in DOM
+    setTimeout(() => {
+      editor.focus();
+      editor.setSelectionRange(0, 0);
+    }, 50);
   } else {
-    editor.setAttribute('readonly', '');
+    editor.readOnly = true;
     editBtn.style.display = '';
     saveBtn.style.display = 'none';
     cancelBtn.style.display = 'none';
@@ -976,19 +981,27 @@ function cancelClaudeMdEdit() {
 }
 
 async function saveClaudeMd() {
-  const path = document.getElementById('claudemd-path').textContent;
-  const content = document.getElementById('claudemd-editor').value;
+  const pathEl = document.getElementById('claudemd-path');
+  const editor = document.getElementById('claudemd-editor');
+  if (!pathEl || !editor) { alert('Editor not loaded'); return; }
+  const path = pathEl.textContent;
+  const content = editor.value;
   if (!path || path === 'Select a file') { status('No file selected'); return; }
-  const ok = await rpc('claudemd.save', {path, content});
-  if (ok === true) {
-    setClaudeMdMode('view');
-    status(`Saved: ${path}`);
-    alert('Saved successfully.');
-    _data.claudemd = await rpc('claudemd.list') || [];
-  } else {
-    const err = (ok && ok.error && ok.error.message) || 'Save returned false.';
-    alert('Save failed: ' + err);
-    status('Save failed: ' + err);
+  try {
+    const ok = await rpc('claudemd.save', {path, content});
+    if (ok === true) {
+      setClaudeMdMode('view');
+      alert('Saved successfully.');
+      status(`Saved: ${path}`);
+      _data.claudemd = await rpc('claudemd.list') || [];
+    } else {
+      const msg = (ok && ok.error && ok.error.message) || 'Save returned: ' + JSON.stringify(ok);
+      alert('Save failed\n' + msg);
+      status('Save failed');
+    }
+  } catch(e) {
+    alert('Save error: ' + e.message);
+    status('Save error');
   }
 }
 
@@ -1038,6 +1051,7 @@ async function buildMemory(main) {
 function showMemoryDetail(idx) {
   const m = _data.memory[idx];
   if (!m) return;
+  _memoryDetailIdx = idx;
   document.querySelectorAll('#memory-list .skill-row').forEach(r => r.classList.remove('selected'));
   const row = document.querySelector(`#memory-list [data-memory-idx="${idx}"]`);
   if (row) row.classList.add('selected');
@@ -1056,9 +1070,17 @@ function showMemoryDetail(idx) {
       <div class="desc-block"><div class="dbl-label">Content</div><div class="dbl-text" style="white-space:pre-wrap;font-family:var(--font-mono);font-size:12px">${m.content.substring(0, 10000)}${m.content.length>10000?'\n... truncated':''}</div></div>
     </div>
     <div class="detail-actions">
-      <button class="btn danger" onclick="deleteMemoryFromDetail('${m.name.replace(/'/g,"\\'")}')">${T.tr('delete')}</button>
+      <button class="btn danger" id="memory-del-detail-btn">${T.tr('delete')}</button>
     </div>`;
+
+  // Event delegation for detail panel delete
+  const delBtn = document.getElementById('memory-del-detail-btn');
+  if (delBtn) {
+    delBtn.addEventListener('click', () => deleteMemoryFromDetail());
+  }
 }
+
+let _memoryDetailIdx = -1;
 
 async function deleteMemory(idx) {
   const m = _data.memory[idx];
@@ -1074,14 +1096,17 @@ async function deleteMemory(idx) {
   }
 }
 
-async function deleteMemoryFromDetail(name) {
-  if (!confirm(`Delete "${name}"?\n${T.tr('confirmDel')}`)) return;
-  const ok = await rpc('memory.delete', {name});
+async function deleteMemoryFromDetail() {
+  const m = _data.memory[_memoryDetailIdx];
+  if (!m) return;
+  if (!confirm(`Delete "${m.name}"?\n${T.tr('confirmDel')}`)) return;
+  const ok = await rpc('memory.delete', {name: m.name});
   if (ok === true) {
-    alert(`Deleted: ${name}`);
+    alert(`Deleted: ${m.name}`);
     navTo('memory');
   } else {
-    alert('Delete failed: ' + ((ok && ok.error && ok.error.message) || 'Operation returned false'));
+    const msg = (ok && ok.error && ok.error.message) || 'Delete returned: ' + JSON.stringify(ok);
+    alert('Delete failed: ' + msg);
     status('Delete failed');
   }
 }
