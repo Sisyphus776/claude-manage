@@ -412,10 +412,26 @@ html, body {
 /* Editor */
 .editor-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .editor-area textarea {
-  flex: 1; background: var(--input-bg); color: var(--text-secondary);
+  flex: 1; background: var(--input-bg); color: var(--text-primary);
   border: none; outline: none; padding: 16px 24px;
   font-family: var(--font-mono); font-size: 13px; resize: none; line-height: 1.6;
+  caret-color: var(--accent); caret-shape: block;
 }
+.editor-area textarea[readonly] {
+  cursor: default;
+  color: var(--text-secondary);
+}
+.editor-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px; color: var(--text-muted);
+}
+.editor-toolbar .edit-indicator {
+  padding: 2px 10px; border-radius: 10px; font-size: 10px; font-weight: 600;
+}
+.editor-toolbar .edit-indicator.view { background: rgba(128,128,128,0.08); color: var(--text-muted); }
+.editor-toolbar .edit-indicator.edit { background: var(--accent-glow); color: var(--accent); }
 
 /* Page switcher */
 .page { display: none; flex: 1; flex-direction: column; overflow: hidden; }
@@ -863,7 +879,6 @@ async function buildClaudeMd(main) {
   _data.claudemd = await rpc('claudemd.list') || [];
   main.innerHTML = `
     <div class="toolbar"><span class="page-title">${T.tr('claudemd')}</span><div class="spacer"></div>
-      <button class="btn primary" onclick="saveClaudeMd()">${T.tr('save')}</button>
       <button class="btn" onclick="navTo('claudemd')">${T.tr('refresh')}</button></div>
     <div class="split">
       <div class="skill-list-pane" style="width:280px">
@@ -871,11 +886,18 @@ async function buildClaudeMd(main) {
         <div class="skill-list-body" id="claudemd-list"></div>
       </div>
       <div class="editor-area">
-        <div style="padding:8px 24px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border)" id="claudemd-path">Select a file</div>
-        <textarea id="claudemd-editor" placeholder="Select a CLAUDE.md file to edit..."></textarea>
+        <div class="editor-toolbar">
+          <span id="claudemd-path">Select a file</span>
+          <div class="spacer"></div>
+          <span id="claudemd-indicator" class="edit-indicator view">VIEW</span>
+          <button class="btn" id="claudemd-edit-btn" onclick="toggleClaudeMdEdit()">✏ Edit</button>
+          <button class="btn primary" id="claudemd-save-btn" onclick="saveClaudeMd()" style="display:none">${T.tr('save')}</button>
+          <button class="btn" id="claudemd-cancel-btn" onclick="cancelClaudeMdEdit()" style="display:none">Cancel</button>
+        </div>
+        <textarea id="claudemd-editor" placeholder="Select a CLAUDE.md file..." readonly></textarea>
       </div>
     </div>
-    <div class="statusbar"><span class="st-left">${T.tr('claudemd')}: ${_data.claudemd.length} files</span></div>`;
+    <div class="statusbar"><span class="st-left" id="claudemd-status">${T.tr('claudemd')}: ${_data.claudemd.length} files</span></div>`;
 
   const listEl = document.getElementById('claudemd-list');
   listEl.innerHTML = _data.claudemd.map((c, i) =>
@@ -889,10 +911,16 @@ async function buildClaudeMd(main) {
     if (!row) return;
     const idx = parseInt(row.getAttribute('data-claudemd-idx'));
     if (idx >= 0 && idx < _data.claudemd.length) {
+      if (isClaudeMdDirty()) {
+        if (!confirm('Unsaved changes will be lost. Continue?')) return;
+      }
       openClaudeMd(idx);
     }
   });
 }
+
+let _claudemdEdited = false;
+function isClaudeMdDirty() { return _claudemdEdited; }
 
 function openClaudeMd(idx) {
   const c = _data.claudemd[idx];
@@ -901,7 +929,50 @@ function openClaudeMd(idx) {
   const row = document.querySelector(`#claudemd-list [data-claudemd-idx="${idx}"]`);
   if (row) row.classList.add('selected');
   document.getElementById('claudemd-path').textContent = c.path;
-  document.getElementById('claudemd-editor').value = c.content;
+  const editor = document.getElementById('claudemd-editor');
+  editor.value = c.content;
+  // Always start in view-only mode
+  setClaudeMdMode('view');
+}
+
+function setClaudeMdMode(mode) {
+  const editor = document.getElementById('claudemd-editor');
+  const editBtn = document.getElementById('claudemd-edit-btn');
+  const saveBtn = document.getElementById('claudemd-save-btn');
+  const cancelBtn = document.getElementById('claudemd-cancel-btn');
+  const indicator = document.getElementById('claudemd-indicator');
+  if (mode === 'edit') {
+    editor.removeAttribute('readonly');
+    editor.focus();
+    editBtn.style.display = 'none';
+    saveBtn.style.display = '';
+    cancelBtn.style.display = '';
+    indicator.textContent = 'EDIT';
+    indicator.className = 'edit-indicator edit';
+    _claudemdEdited = true;
+  } else {
+    editor.setAttribute('readonly', '');
+    editBtn.style.display = '';
+    saveBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+    indicator.textContent = 'VIEW';
+    indicator.className = 'edit-indicator view';
+    _claudemdEdited = false;
+  }
+}
+
+function toggleClaudeMdEdit() {
+  const path = document.getElementById('claudemd-path').textContent;
+  if (!path || path === 'Select a file') { status('No file selected'); return; }
+  setClaudeMdMode('edit');
+}
+
+function cancelClaudeMdEdit() {
+  setClaudeMdMode('view');
+  // Reload original content
+  const path = document.getElementById('claudemd-path').textContent;
+  const c = _data.claudemd.find(x => x.path === path);
+  if (c) document.getElementById('claudemd-editor').value = c.content;
 }
 
 async function saveClaudeMd() {
@@ -910,10 +981,12 @@ async function saveClaudeMd() {
   if (!path || path === 'Select a file') { status('No file selected'); return; }
   const ok = await rpc('claudemd.save', {path, content});
   if (ok === true) {
+    setClaudeMdMode('view');
     status(`Saved: ${path}`);
+    alert('Saved successfully.');
     _data.claudemd = await rpc('claudemd.list') || [];
   } else {
-    const err = ok?.error?.message || 'Unknown error';
+    const err = (ok && ok.error && ok.error.message) || 'Save returned false.';
     alert('Save failed: ' + err);
     status('Save failed: ' + err);
   }
@@ -925,31 +998,99 @@ async function buildMemory(main) {
   main.innerHTML = `
     <div class="toolbar"><span class="page-title">${T.tr('memory')}</span><div class="spacer"></div>
       <button class="btn" onclick="navTo('memory')">${T.tr('refresh')}</button></div>
-    <div class="table-wrap"><table class="data-table" id="memory-table">
-      <thead><tr><th>${T.tr('name')}</th><th>${T.tr('type')}</th><th>Description</th><th style="width:60px"></th></tr></thead><tbody></tbody></table></div>
-    <div class="statusbar"><span class="st-left">${T.tr('memory')}: ${_data.memory.length} files</span></div>`;
-  document.querySelector('#memory-table tbody').innerHTML = _data.memory.map(m =>
-    `<tr><td style="cursor:pointer" onclick="showMemoryContent('${m.name.replace(/'/g,"\\'")}')">${m.name}</td>
-      <td>${m.memory_type}</td><td>${m.description||''}</td>
-      <td><button class="btn danger" style="height:22px;padding:0 8px;font-size:11px" onclick="event.stopPropagation();deleteMemory('${m.name.replace(/'/g,"\\'")}')">Del</button></td></tr>`).join('');
+    <div class="split">
+      <div class="skill-list-pane" style="width:320px">
+        <div class="skill-list-header"><span>${T.tr('name')}</span><span>${T.tr('type')}</span></div>
+        <div class="skill-list-body" id="memory-list"></div>
+      </div>
+      <div class="detail-pane" id="memory-detail">
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted)">← Select a memory file</div>
+      </div>
+    </div>
+    <div class="statusbar"><span class="st-left" id="memory-status">${T.tr('memory')}: ${_data.memory.length} files</span></div>`;
+
+  const listEl = document.getElementById('memory-list');
+  listEl.innerHTML = _data.memory.map((m, i) =>
+    `<div class="skill-row" data-memory-idx="${i}" style="display:flex">
+      <span class="s-name" style="flex:1">${m.name}</span>
+      <span class="s-type" style="font-size:11px;color:var(--text-muted);margin-right:8px">${m.memory_type}</span>
+      <button class="btn danger" style="height:22px;padding:0 8px;font-size:11px;flex-shrink:0" data-del-idx="${i}">Del</button></div>`).join('');
+
+  listEl.addEventListener('click', function(e) {
+    const delBtn = e.target.closest('button');
+    if (delBtn) {
+      e.stopPropagation();
+      const idx = parseInt(delBtn.getAttribute('data-del-idx'));
+      if (idx >= 0 && idx < _data.memory.length) {
+        deleteMemory(idx);
+      }
+      return;
+    }
+    const row = e.target.closest('.skill-row');
+    if (!row) return;
+    const idx = parseInt(row.getAttribute('data-memory-idx'));
+    if (idx >= 0 && idx < _data.memory.length) {
+      showMemoryDetail(idx);
+    }
+  });
 }
 
-function showMemoryContent(name) {
-  const m = _data.memory.find(x => x.name === name);
+function showMemoryDetail(idx) {
+  const m = _data.memory[idx];
   if (!m) return;
-  alert(m.content.substring(0, 2000));
+  document.querySelectorAll('#memory-list .skill-row').forEach(r => r.classList.remove('selected'));
+  const row = document.querySelector(`#memory-list [data-memory-idx="${idx}"]`);
+  if (row) row.classList.add('selected');
+
+  document.getElementById('memory-detail').innerHTML = `
+    <div class="detail-header">
+      <div class="dh-name">${m.name}</div>
+      <div class="dh-meta">
+        <div class="dh-meta-item"><span class="label">${T.tr('type')}</span><span class="value">${m.memory_type || '(none)'}</span></div>
+        <div class="dh-meta-item"><span class="label">${T.tr('size')}</span><span class="value">${m.size<1024?m.size+'B':(m.size/1024).toFixed(1)+'KB'}</span></div>
+        <div class="dh-meta-item"><span class="label">${T.tr('path')}</span><span class="value">${m.path}</span></div>
+      </div>
+    </div>
+    <div class="detail-body">
+      ${m.description?`<div class="desc-block"><div class="dbl-label">Description</div><div class="dbl-text">${m.description}</div></div>`:''}
+      <div class="desc-block"><div class="dbl-label">Content</div><div class="dbl-text" style="white-space:pre-wrap;font-family:var(--font-mono);font-size:12px">${m.content.substring(0, 10000)}${m.content.length>10000?'\n... truncated':''}</div></div>
+    </div>
+    <div class="detail-actions">
+      <button class="btn danger" onclick="deleteMemoryFromDetail('${m.name.replace(/'/g,"\\'")}')">${T.tr('delete')}</button>
+    </div>`;
 }
 
-async function deleteMemory(name) {
+async function deleteMemory(idx) {
+  const m = _data.memory[idx];
+  if (!m) return;
+  if (!confirm(`Delete "${m.name}"?\n${T.tr('confirmDel')}`)) return;
+  const ok = await rpc('memory.delete', {name: m.name});
+  if (ok === true) {
+    alert(`Deleted: ${m.name}`);
+    navTo('memory');
+  } else {
+    alert('Delete failed: ' + ((ok && ok.error && ok.error.message) || 'Operation returned false'));
+    status('Delete failed');
+  }
+}
+
+async function deleteMemoryFromDetail(name) {
   if (!confirm(`Delete "${name}"?\n${T.tr('confirmDel')}`)) return;
   const ok = await rpc('memory.delete', {name});
   if (ok === true) {
-    status(`Deleted: ${name}`);
+    alert(`Deleted: ${name}`);
     navTo('memory');
   } else {
-    alert('Delete failed');
+    alert('Delete failed: ' + ((ok && ok.error && ok.error.message) || 'Operation returned false'));
     status('Delete failed');
   }
+}
+
+function showMemoryContent(name) {
+  // Legacy stub — no longer used, replaced by showMemoryDetail
+  const m = _data.memory.find(x => x.name === name);
+  if (!m) return;
+  alert(m.content.substring(0, 2000));
 }
 
 /* ── Settings (exact copy of original HTML structure) ───────────────── */
