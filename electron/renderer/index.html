@@ -905,16 +905,21 @@ async function buildClaudeMd(main) {
       <span class="s-name" style="flex:1">${c.label}</span>
       <span class="s-type">${c.size<1024?c.size+'B':(c.size/1024).toFixed(1)+'KB'}</span></div>`).join('');
 
-  // Event delegation — avoids backslash-in-onclick escaping bugs
+  // Event delegation — walk up to find the skill-row
   listEl.addEventListener('click', function(e) {
-    const row = e.target.closest('.skill-row');
-    if (!row) return;
-    const idx = parseInt(row.getAttribute('data-claudemd-idx'));
-    if (idx >= 0 && idx < _data.claudemd.length) {
-      if (isClaudeMdDirty()) {
-        if (!confirm('Unsaved changes will be lost. Continue?')) return;
+    let el = e.target;
+    while (el && el !== listEl) {
+      if (el.classList && el.classList.contains('skill-row') && el.hasAttribute('data-claudemd-idx')) {
+        if (isClaudeMdDirty()) {
+          if (!confirm('Unsaved changes will be lost. Continue?')) return;
+        }
+        const idx = parseInt(el.getAttribute('data-claudemd-idx'));
+        if (idx >= 0 && idx < _data.claudemd.length) {
+          openClaudeMd(idx);
+        }
+        return;
       }
-      openClaudeMd(idx);
+      el = el.parentElement;
     }
   });
 }
@@ -943,19 +948,28 @@ function setClaudeMdMode(mode) {
   const indicator = document.getElementById('claudemd-indicator');
   if (!editor) return;
   if (mode === 'edit') {
+    // CRITICAL: blur first to reset Chromium internal state for readonly textareas
+    // Without this, focus() after toggling readonly the second time silently fails.
+    editor.blur();
     editor.readOnly = false;
+    // Force synchronous layout reflow — ensures readonly change is committed
+    void editor.offsetHeight;
     editBtn.style.display = 'none';
     saveBtn.style.display = '';
     cancelBtn.style.display = '';
     indicator.textContent = 'EDIT';
     indicator.className = 'edit-indicator edit';
     _claudemdEdited = true;
-    // Delay focus to ensure readonly removal has taken effect in DOM
-    setTimeout(() => {
-      editor.focus();
-      editor.setSelectionRange(0, 0);
-    }, 50);
+    // Two rAF frames guarantee paint + compositing complete before focusing
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        editor.focus();
+        editor.setSelectionRange(0, 0);
+      });
+    });
   } else {
+    // Blur before setting readonly to reset cursor state cleanly
+    editor.blur();
     editor.readOnly = true;
     editBtn.style.display = '';
     saveBtn.style.display = 'none';
@@ -974,19 +988,23 @@ function toggleClaudeMdEdit() {
 
 function cancelClaudeMdEdit() {
   setClaudeMdMode('view');
-  // Reload original content
   const path = document.getElementById('claudemd-path').textContent;
   const c = _data.claudemd.find(x => x.path === path);
   if (c) document.getElementById('claudemd-editor').value = c.content;
 }
 
 async function saveClaudeMd() {
-  const pathEl = document.getElementById('claudemd-path');
   const editor = document.getElementById('claudemd-editor');
-  if (!pathEl || !editor) { alert('Editor not loaded'); return; }
+  const pathEl = document.getElementById('claudemd-path');
+  if (!pathEl || !editor) { alert('Editor not loaded. Try switching pages and back.'); return; }
   const path = pathEl.textContent;
   const content = editor.value;
-  if (!path || path === 'Select a file') { status('No file selected'); return; }
+  if (!path || path === 'Select a file') { alert('No file selected. Click a file in the left sidebar first.'); return; }
+  if (typeof window.ccm === 'undefined' || typeof window.ccm.rpc !== 'function') {
+    alert('Bridge not connected. Please restart the app.');
+    return;
+  }
+  status('Saving...');
   try {
     const ok = await rpc('claudemd.save', {path, content});
     if (ok === true) {
@@ -995,13 +1013,13 @@ async function saveClaudeMd() {
       status(`Saved: ${path}`);
       _data.claudemd = await rpc('claudemd.list') || [];
     } else {
-      const msg = (ok && ok.error && ok.error.message) || 'Save returned: ' + JSON.stringify(ok);
+      const msg = (ok && ok.error && ok.error.message) || JSON.stringify(ok);
       alert('Save failed\n' + msg);
-      status('Save failed');
+      status('Save failed: ' + msg);
     }
   } catch(e) {
     alert('Save error: ' + e.message);
-    status('Save error');
+    status('Save error: ' + e.message);
   }
 }
 
@@ -1030,20 +1048,31 @@ async function buildMemory(main) {
       <button class="btn danger" style="height:22px;padding:0 8px;font-size:11px;flex-shrink:0" data-del-idx="${i}">Del</button></div>`).join('');
 
   listEl.addEventListener('click', function(e) {
-    const delBtn = e.target.closest('button');
-    if (delBtn) {
-      e.stopPropagation();
-      const idx = parseInt(delBtn.getAttribute('data-del-idx'));
-      if (idx >= 0 && idx < _data.memory.length) {
-        deleteMemory(idx);
+    // Walk up from target to find a button or skill-row
+    let el = e.target;
+    while (el && el !== listEl) {
+      if (el.tagName === 'BUTTON' && el.hasAttribute('data-del-idx')) {
+        e.stopPropagation();
+        e.preventDefault();
+        const idx = parseInt(el.getAttribute('data-del-idx'));
+        if (idx >= 0 && idx < _data.memory.length) {
+          deleteMemory(idx);
+        }
+        return;
       }
-      return;
+      el = el.parentElement;
     }
-    const row = e.target.closest('.skill-row');
-    if (!row) return;
-    const idx = parseInt(row.getAttribute('data-memory-idx'));
-    if (idx >= 0 && idx < _data.memory.length) {
-      showMemoryDetail(idx);
+    // Not a button click — check for row click
+    el = e.target;
+    while (el && el !== listEl) {
+      if (el.classList && el.classList.contains('skill-row') && el.hasAttribute('data-memory-idx')) {
+        const idx = parseInt(el.getAttribute('data-memory-idx'));
+        if (idx >= 0 && idx < _data.memory.length) {
+          showMemoryDetail(idx);
+        }
+        return;
+      }
+      el = el.parentElement;
     }
   });
 }
@@ -1084,30 +1113,48 @@ let _memoryDetailIdx = -1;
 
 async function deleteMemory(idx) {
   const m = _data.memory[idx];
-  if (!m) return;
+  if (!m) { status('Memory entry not found'); return; }
   if (!confirm(`Delete "${m.name}"?\n${T.tr('confirmDel')}`)) return;
-  const ok = await rpc('memory.delete', {name: m.name});
-  if (ok === true) {
-    alert(`Deleted: ${m.name}`);
-    navTo('memory');
-  } else {
-    alert('Delete failed: ' + ((ok && ok.error && ok.error.message) || 'Operation returned false'));
-    status('Delete failed');
+  if (typeof window.ccm === 'undefined') { alert('Bridge not connected. Restart the app.'); return; }
+  status('Deleting...');
+  try {
+    const ok = await rpc('memory.delete', {name: m.name});
+    if (ok === true) {
+      alert(`Deleted: ${m.name}`);
+      navTo('memory');
+    } else {
+      const msg = (ok && ok.error && ok.error.message) || JSON.stringify(ok);
+      alert('Delete failed\n' + msg);
+      status('Delete failed');
+    }
+  } catch(e) {
+    alert('Delete error: ' + e.message);
+    status('Delete error');
   }
 }
 
 async function deleteMemoryFromDetail() {
+  if (_memoryDetailIdx < 0 || _memoryDetailIdx >= _data.memory.length) {
+    status('Memory entry not found'); return;
+  }
   const m = _data.memory[_memoryDetailIdx];
-  if (!m) return;
+  if (!m) { status('Memory entry not found'); return; }
   if (!confirm(`Delete "${m.name}"?\n${T.tr('confirmDel')}`)) return;
-  const ok = await rpc('memory.delete', {name: m.name});
-  if (ok === true) {
-    alert(`Deleted: ${m.name}`);
-    navTo('memory');
-  } else {
-    const msg = (ok && ok.error && ok.error.message) || 'Delete returned: ' + JSON.stringify(ok);
-    alert('Delete failed: ' + msg);
-    status('Delete failed');
+  if (typeof window.ccm === 'undefined') { alert('Bridge not connected. Restart the app.'); return; }
+  status('Deleting...');
+  try {
+    const ok = await rpc('memory.delete', {name: m.name});
+    if (ok === true) {
+      alert(`Deleted: ${m.name}`);
+      navTo('memory');
+    } else {
+      const msg = (ok && ok.error && ok.error.message) || JSON.stringify(ok);
+      alert('Delete failed\n' + msg);
+      status('Delete failed');
+    }
+  } catch(e) {
+    alert('Delete error: ' + e.message);
+    status('Delete error');
   }
 }
 
