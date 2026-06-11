@@ -708,20 +708,30 @@ async function autoTranslate(name, text) {
 }
 
 async function toggleSkill(name) {
-  await rpc('skills.toggle', {name});
-  _data.skills = await rpc('skills.list') || [];
-  renderSkillsList();
-  showSkillDetail(name);
-  document.getElementById('skills-status').textContent = `Skills: ${_data.skills.length} total`;
+  const ok = await rpc('skills.toggle', {name});
+  if (ok === true) {
+    _data.skills = await rpc('skills.list') || [];
+    renderSkillsList();
+    showSkillDetail(name);
+    document.getElementById('skills-status').textContent = `Skills: ${_data.skills.length} total`;
+  } else {
+    alert('Toggle failed');
+    status('Toggle failed');
+  }
 }
 
 async function deleteSkill(name) {
   if (!confirm(`Delete "${name}"?\n${T.tr('confirmDel')}`)) return;
-  await rpc('skills.delete', {name});
-  _data.skills = await rpc('skills.list') || [];
-  renderSkillsList();
-  document.getElementById('skills-detail').innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted)">${T.tr('selectSkill')}</div>`;
-  document.getElementById('skills-status').textContent = `${T.tr('skills')}: ${_data.skills.length} total`;
+  const ok = await rpc('skills.delete', {name});
+  if (ok === true) {
+    _data.skills = await rpc('skills.list') || [];
+    renderSkillsList();
+    document.getElementById('skills-detail').innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted)">${T.tr('selectSkill')}</div>`;
+    document.getElementById('skills-status').textContent = `${T.tr('skills')}: ${_data.skills.length} total`;
+  } else {
+    alert('Delete failed');
+    status('Delete failed');
+  }
 }
 
 async function batchTranslateSkills() {
@@ -898,9 +908,15 @@ async function saveClaudeMd() {
   const path = document.getElementById('claudemd-path').textContent;
   const content = document.getElementById('claudemd-editor').value;
   if (!path || path === 'Select a file') { status('No file selected'); return; }
-  await rpc('claudemd.save', {path, content});
-  status(`Saved: ${path}`);
-  _data.claudemd = await rpc('claudemd.list') || [];
+  const ok = await rpc('claudemd.save', {path, content});
+  if (ok === true) {
+    status(`Saved: ${path}`);
+    _data.claudemd = await rpc('claudemd.list') || [];
+  } else {
+    const err = ok?.error?.message || 'Unknown error';
+    alert('Save failed: ' + err);
+    status('Save failed: ' + err);
+  }
 }
 
 /* ── Memory ─────────────────────────────────────────────────────────── */
@@ -926,8 +942,14 @@ function showMemoryContent(name) {
 
 async function deleteMemory(name) {
   if (!confirm(`Delete "${name}"?\n${T.tr('confirmDel')}`)) return;
-  await rpc('memory.delete', {name});
-  navTo('memory');
+  const ok = await rpc('memory.delete', {name});
+  if (ok === true) {
+    status(`Deleted: ${name}`);
+    navTo('memory');
+  } else {
+    alert('Delete failed');
+    status('Delete failed');
+  }
 }
 
 /* ── Settings (exact copy of original HTML structure) ───────────────── */
@@ -980,8 +1002,9 @@ async function loadSettings() {
 
 async function saveSettings() {
   const api = {app_id:document.getElementById('set-appid').value.trim(), secret_key:document.getElementById('set-secret').value.trim()};
-  await rpc('settings.save', {baidu_api:api});
-  status('Settings saved');
+  const ok = await rpc('settings.save', {baidu_api:api});
+  if (ok === true) { status('Settings saved'); }
+  else { alert('Save failed'); status('Save failed'); }
 }
 
 async function clearCache() {
