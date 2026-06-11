@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Claude Manage</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   CSS VARIABLES — 4 THEMES
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Default: OLED Dark */
+:root, [data-theme="dark"] {
+  --bg-root:     #0a0a0a;
+  --bg-surface:  #0f0f0f;
+  --bg-elevated: #151515;
+  --bg-card:     #111111;
+  --bg-hover:    rgba(255,255,255,0.03);
+  --bg-active:   rgba(88,166,255,0.10);
+  --border:      #1e1e1e;
+  --border-strong: #2a2a2a;
+  --text-primary:   #e4e4e4;
+  --text-secondary: #888;
+  --text-muted:     #555;
+  --accent:      #58a6ff;
+  --accent-glow: rgba(88,166,255,0.18);
+  --green:       #3fb950;
+  --green-bg:    rgba(63,185,80,0.10);
+  --red:         #f85149;
+  --red-bg:      rgba(248,81,73,0.10);
+  --amber:       #d2991d;
+  --btn-primary: #1a6bff;
+  --btn-primary-hover: #2580ff;
+  --input-bg:    #0d0d0d;
+  --scrollbar-thumb: #222;
+  --sidebar-bg:  #080808;
+  --titlebar-bg: #080808;
+  --statusbar-bg:#0a0a0a;
+}
+
+/* Clean White */
+[data-theme="white"] {
+  --bg-root:     #f5f5f5;
+  --bg-surface:  #ffffff;
+  --bg-elevated: #fafafa;
+  --bg-card:     #ffffff;
+  --bg-hover:    rgba(0,0,0,0.02);
+  --bg-active:   rgba(37,99,255,0.06);
+  --border:      #e5e5e5;
+  --border-strong: #d4d4d4;
+  --text-primary:   #1a1a1a;
+  --text-secondary: #666;
+  --text-muted:     #999;
+  --accent:      #2563eb;
+  --accent-glow: rgba(37,99,255,0.12);
+  --green:       #16a34a;
+  --green-bg:    rgba(22,163,74,0.08);
+  --red:         #dc2626;
+  --red-bg:      rgba(220,38,38,0.06);
+  --amber:       #d97706;
+  --btn-primary: #2563eb;
+  --btn-primary-hover: #1d4ed8;
+  --input-bg:    #ffffff;
+  --scrollbar-thumb: #ddd;
+  --sidebar-bg:  #f8f8f8;
+  --titlebar-bg: #f0f0f0;
+  --statusbar-bg:#f5f5f5;
+}
+
+/* Glass Light */
+[data-theme="glass-light"] {
+  --bg-root:     rgba(255,255,255,0.45);
+  --bg-surface:  rgba(255,255,255,0.55);
+  --bg-elevated: rgba(255,255,255,0.65);
+  --bg-card:     rgba(255,255,255,0.60);
+  --bg-hover:    rgba(255,255,255,0.40);
+  --bg-active:   rgba(99,102,241,0.10);
+  --border:      rgba(0,0,0,0.06);
+  --border-strong: rgba(0,0,0,0.10);
+  --text-primary:   #374151;
+  --text-secondary: #666;
+  --text-muted:     #aaa;
+  --accent:      #6366f1;
+  --accent-glow: rgba(99,102,241,0.14);
+  --green:       #10b981;
+  --green-bg:    rgba(16,185,129,0.08);
+  --red:         #ef4444;
+  --red-bg:      rgba(239,68,68,0.08);
+  --amber:       #d97706;
+  --btn-primary: #6366f1;
+  --btn-primary-hover: #4f46e5;
+  --input-bg:    rgba(255,255,255,0.65);
+  --scrollbar-thumb: rgba(0,0,0,0.12);
+  --sidebar-bg:  rgba(255,255,255,0.45);
+  --titlebar-bg: rgba(255,255,255,0.50);
+  --statusbar-bg:rgba(255,255,255,0.35);
+}
+
+/* Glass Dark */
+[data-theme="glass-dark"] {
+  --bg-root:     rgba(15,15,20,0.55);
+  --bg-surface:  rgba(0,0,0,0.30);
+  --bg-elevated: rgba(20,20,30,0.60);
+  --bg-card:     rgba(255,255,255,0.04);
+  --bg-hover:    rgba(255,255,255,0.04);
+  --bg-active:   rgba(99,102,241,0.12);
+  --border:      rgba(255,255,255,0.04);
+  --border-strong: rgba(255,255,255,0.06);
+  --text-primary:   #ccc;
+  --text-secondary: #888;
+  --text-muted:     #555;
+  --accent:      #6366f1;
+  --accent-glow: rgba(99,102,241,0.15);
+  --green:       #34d399;
+  --green-bg:    rgba(52,211,153,0.10);
+  --red:         #f87171;
+  --red-bg:      rgba(248,113,113,0.08);
+  --amber:       #fbbf24;
+  --btn-primary: #6366f1;
+  --btn-primary-hover: #4f46e5;
+  --input-bg:    rgba(255,255,255,0.05);
+  --scrollbar-thumb: rgba(255,255,255,0.06);
+  --sidebar-bg:  rgba(0,0,0,0.35);
+  --titlebar-bg: rgba(0,0,0,0.40);
+  --statusbar-bg:rgba(0,0,0,0.25);
+}
+
+[data-theme="glass-light"] .glass-blur, [data-theme="glass-dark"] .glass-blur {
+  background: var(--bg-root);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+[data-theme="glass-light"] .glass-blur-strong, [data-theme="glass-dark"] .glass-blur-strong {
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GLOBAL (EXACT COPY OF ORIGINAL ui-preview.html)
+   ═══════════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-ui:     "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono:   "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", monospace;
+  --font-zh:     "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  --radius-sm:   4px;
+  --radius:      6px;
+  --radius-lg:   8px;
+  --sidebar-w:   52px;
+}
+
+html, body {
+  height: 100%; overflow: hidden;
+  background: transparent;
+  font-family: var(--font-ui), var(--font-zh);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  height: 100%; display: flex; flex-direction: column;
+  border-radius: 8px; overflow: hidden;
+  background: var(--bg-root);
+}
+
+/* Dark & White: solid backgrounds, NO transparency */
+[data-theme="dark"] #app  { background: #0a0a0a; }
+[data-theme="white"] #app { background: #f5f5f5; }
+
+/* Glass themes: semi-transparent with backdrop blur */
+[data-theme="glass-light"] #app {
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+[data-theme="glass-dark"] #app {
+  background: rgba(15,15,20,0.55);
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+}
+
+/* Titlebar */
+.titlebar {
+  height: 36px; background: var(--titlebar-bg);
+  display: flex; align-items: center; padding: 0 14px;
+  border-bottom: 1px solid var(--border); user-select: none;
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+  backdrop-filter: inherit; -webkit-backdrop-filter: inherit;
+}
+.titlebar .tb-dots { display: flex; gap: 7px; }
+.titlebar .tb-dots span { width: 11px; height: 11px; border-radius: 50%; }
+.tb-dots .dot-r { background: #f85149; }
+.tb-dots .dot-y { background: #d2991d; }
+.tb-dots .dot-g { background: #3fb950; }
+.titlebar .tb-text { font-size: 11px; color: var(--text-muted); flex: 1; text-align: center; font-weight: 500; }
+.titlebar .tb-ctrls { display: flex; gap: 2px; -webkit-app-region: no-drag; }
+.titlebar .tb-ctrls button {
+  width: 34px; height: 26px; border: none; border-radius: var(--radius-sm); cursor: pointer;
+  background: transparent; color: var(--text-muted); font-size: 13px;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s ease;
+}
+.titlebar .tb-ctrls button:hover { background: var(--bg-hover); color: var(--text-secondary); }
+.titlebar .tb-ctrls .btn-close:hover { background: #c42b2b; color: #fff; }
+
+.body-wrap { display: flex; flex: 1; overflow: hidden; }
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-w); background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 0; gap: 2px; flex-shrink: 0;
+}
+.side-icon {
+  width: 36px; height: 36px; border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  color: #555; font-size: 16px; cursor: pointer;
+  transition: all 0.15s ease; position: relative; border: none; background: none;
+  padding: 0;
+}
+[data-theme="white"] .side-icon, [data-theme="glass-light"] .side-icon { color: #aaa; }
+.side-icon:hover { color: #aaa; background: rgba(255,255,255,0.04); }
+[data-theme="white"] .side-icon:hover, [data-theme="glass-light"] .side-icon:hover { color: #555; background: rgba(0,0,0,0.04); }
+.side-icon.active { color: var(--accent); background: var(--accent-glow); }
+.side-icon .tooltip {
+  display: none; position: absolute; left: 44px; top: 50%; transform: translateY(-50%);
+  background: #1e1e1e; color: #ccc; font-size: 11px; padding: 3px 10px;
+  border-radius: var(--radius-sm); white-space: nowrap;
+  border: 1px solid #2e2e2e; z-index: 100; pointer-events: none;
+}
+[data-theme="white"] .side-icon .tooltip, [data-theme="glass-light"] .side-icon .tooltip { background: #333; color: #fff; }
+.side-icon:hover .tooltip { display: block; }
+.side-icon svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.side-spacer { flex: 1; }
+.side-brand { color: #333; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+
+/* Main */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Toolbar */
+.toolbar {
+  height: 44px; background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 16px; gap: 10px; flex-shrink: 0;
+}
+.toolbar .page-title { font-size: 15px; font-weight: 600; color: var(--text-primary); flex-shrink: 0; }
+[data-theme="dark"] .toolbar .page-title { color: #fff; }
+.toolbar .spacer { flex: 1; }
+.search-input {
+  width: 200px; height: 28px; background: var(--input-bg);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  color: var(--text-secondary); font-size: 12px; padding: 0 10px; outline: none;
+  transition: border-color 0.15s;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--text-muted); }
+
+.btn {
+  height: 28px; padding: 0 14px; border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border-strong); background: var(--bg-card);
+  color: var(--text-secondary); transition: all 0.15s ease;
+  white-space: nowrap; display: flex; align-items: center; gap: 5px;
+}
+.btn:hover { background: var(--bg-elevated); border-color: var(--border-strong); color: var(--text-primary); }
+.btn:active { opacity: 0.8; }
+.btn.primary { background: var(--btn-primary); border-color: var(--btn-primary); color: #fff; }
+.btn.primary:hover { background: var(--btn-primary-hover); }
+.btn.danger { background: transparent; border-color: rgba(248,81,73,0.3); color: var(--red); }
+.btn.danger:hover { background: var(--red-bg); border-color: var(--red); }
+.btn svg { width: 14px; height: 14px; }
+
+/* Split pane */
+.split { flex: 1; display: flex; overflow: hidden; }
+
+/* Skill list */
+.skill-list-pane {
+  width: 340px; flex-shrink: 0; background: var(--bg-root);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column;
+}
+.skill-list-header {
+  height: 30px; background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 12px;
+  font-size: 11px; color: var(--text-muted); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.skill-list-header span:nth-child(1) { flex: 1; }
+.skill-list-header span:nth-child(2) { width: 90px; }
+.skill-list-header span:nth-child(3) { width: 55px; }
+.skill-list-body { flex: 1; overflow-y: auto; }
+.skill-list-body::-webkit-scrollbar { width: 5px; }
+.skill-list-body::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+.skill-list-body::-webkit-scrollbar-track { background: transparent; }
+
+.skill-row {
+  height: 34px; display: flex; align-items: center; padding: 0 12px;
+  font-size: 13px; cursor: pointer; border-bottom: 1px solid rgba(128,128,128,0.06);
+  transition: background 0.1s; background: none; border-left: 2px solid transparent;
+}
+.skill-row:hover { background: var(--bg-hover); }
+.skill-row.selected { background: var(--bg-active); border-left-color: var(--accent); padding-left: 12px; }
+.skill-row .s-name { flex: 1; display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skill-row .s-type { width: 90px; font-size: 11px; color: var(--text-muted); }
+.skill-row .s-status { width: 55px; font-size: 11px; }
+
+.skill-icon-dir { color: #58a6ff; font-size: 14px; flex-shrink: 0; }
+.skill-icon-link { color: #a371f7; font-size: 14px; flex-shrink: 0; }
+.skill-icon-file { color: #8b949e; font-size: 14px; flex-shrink: 0; }
+
+.status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 500;
+}
+.status-badge.active { background: var(--green-bg); color: var(--green); }
+.status-badge.disabled { background: rgba(128,128,128,0.06); color: var(--text-muted); }
+.status-badge.broken { background: var(--red-bg); color: var(--red); }
+.status-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+.status-dot.green { background: var(--green); }
+.status-dot.gray { background: #555; }
+.status-dot.red { background: var(--red); }
+
+/* Detail panel */
+.detail-pane {
+  flex: 1; display: flex; flex-direction: column; overflow-y: auto;
+}
+.detail-pane::-webkit-scrollbar { width: 5px; }
+.detail-pane::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+.detail-header { padding: 20px 24px 12px; border-bottom: 1px solid var(--border); }
+.detail-header .dh-name { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+[data-theme="dark"] .detail-header .dh-name { color: #fff; }
+.detail-header .dh-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+.dh-meta-item { display: flex; flex-direction: column; gap: 2px; }
+.dh-meta-item .label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.dh-meta-item .value { font-size: 12px; color: var(--text-secondary); font-family: var(--font-mono); }
+.detail-body { padding: 16px 24px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+.desc-block { }
+.desc-block .dbl-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }
+.desc-block .dbl-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+.desc-block .dbl-text.cn { color: var(--text-secondary); border-left: 2px solid var(--accent); padding-left: 12px; margin-top: 8px; }
+.tags-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  padding: 2px 10px; border-radius: 10px; font-size: 11px;
+  background: rgba(88,166,255,0.08); color: var(--accent);
+  border: 1px solid rgba(88,166,255,0.12);
+}
+.file-list { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: flex; flex-direction: column; gap: 3px; }
+.file-list span { padding: 2px 0; }
+.file-list span::before { content: "└ "; color: #333; }
+.detail-actions {
+  padding: 12px 24px; border-top: 1px solid var(--border);
+  background: var(--bg-surface); display: flex; gap: 8px; align-items: center;
+}
+.detail-actions .spacer { flex: 1; }
+
+/* Status bar */
+.statusbar {
+  height: 26px; background: var(--statusbar-bg);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 14px;
+  font-size: 11px; color: var(--text-muted); flex-shrink: 0;
+}
+.statusbar .st-left { flex: 1; }
+.statusbar .st-right { color: var(--text-muted); opacity: 0.6; }
+
+/* Dashboard */
+.dash-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px 24px; }
+.dash-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px; cursor: pointer;
+  transition: all 0.15s ease; position: relative; overflow: hidden;
+}
+.dash-card:hover { background: var(--bg-elevated); border-color: var(--border-strong); transform: translateY(-1px); }
+.dash-card::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--accent); transform: scaleX(0); transition: transform 0.2s ease;
+}
+.dash-card:hover::after { transform: scaleX(1); }
+.dash-card .dc-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; font-weight: 600; }
+.dash-card .dc-count { font-size: 28px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+[data-theme="dark"] .dash-card .dc-count { color: #fff; }
+.dash-card .dc-sub { font-size: 11px; color: var(--text-secondary); }
+.dash-card.warn .dc-count { color: var(--amber); }
+.dash-card.error .dc-count { color: var(--red); }
+
+/* Settings */
+.settings-section { margin-bottom: 20px; }
+.settings-section .ss-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.settings-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 6px; }
+.settings-row .sr-label { font-size: 12px; color: var(--text-secondary); flex: 1; }
+.settings-row select, .settings-row input {
+  background: var(--input-bg); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 12px; padding: 4px 10px; outline: none;
+}
+.settings-row select:focus, .settings-row input:focus { border-color: var(--accent); }
+.settings-row input { font-family: var(--font-mono); font-size: 11px; width: 220px; }
+
+/* Table pages */
+.table-wrap { flex: 1; overflow-y: auto; }
+.table-wrap::-webkit-scrollbar { width: 5px; }
+.table-wrap::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  background: var(--bg-surface); color: var(--text-muted); border-bottom: 1px solid var(--border);
+  padding: 8px 12px; font-size: 10.5px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; text-align: left; position: sticky; top: 0; z-index: 5;
+}
+.data-table td { padding: 6px 12px; border-bottom: 1px solid rgba(128,128,128,0.06); color: var(--text-secondary); font-size: 13px; }
+.data-table tr:hover td { background: var(--bg-hover); }
+
+/* Editor */
+.editor-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.editor-area textarea {
+  flex: 1; background: var(--input-bg); color: var(--text-secondary);
+  border: none; outline: none; padding: 16px 24px;
+  font-family: var(--font-mono); font-size: 13px; resize: none; line-height: 1.6;
+}
+
+/* Page switcher */
+.page { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.page.visible { display: flex; }
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.25s ease; }
+.slide-up { animation: slideUp 0.3s ease; }
+
+/* Glass themes: semi-transparent #app with blur */
+[data-theme="glass-light"] #app {
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+[data-theme="glass-dark"] #app {
+  background: rgba(15,15,20,0.55);
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- TITLEBAR -->
+  <div class="titlebar">
+    <div class="tb-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div>
+    <span class="tb-text">Claude Manage</span>
+    <div class="tb-ctrls">
+      <button onclick="ccm.minimize()">─</button>
+      <button onclick="ccm.maximize()">□</button>
+      <button class="btn-close" onclick="ccm.close()">✕</button>
+    </div>
+  </div>
+
+  <div class="body-wrap">
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar"></nav>
+    <!-- MAIN -->
+    <div class="main" id="main-content"></div>
+  </div>
+  <div class="statusbar"><span class="st-left" id="status-text">Ready</span><span class="st-right">v2.0</span></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   I18N
+   ═══════════════════════════════════════════════════════════════════════ */
+const T = {
+  lang: localStorage.getItem('claude-lang') || 'zh',
+  set(l){ this.lang=l; localStorage.setItem('claude-lang',l); },
+  tr(key){ return (this.data[key]||{})[this.lang] || key; },
+  data: {
+    dashboard:   {zh:'首页',      en:'Dashboard'},
+    skills:      {zh:'Skills',    en:'Skills'},
+    plugins:     {zh:'Plugins',   en:'Plugins'},
+    mcp:         {zh:'MCP',       en:'MCP'},
+    hooks:       {zh:'Hooks',     en:'Hooks'},
+    claudemd:    {zh:'CLAUDE.md', en:'CLAUDE.md'},
+    memory:      {zh:'Memory',    en:'Memory'},
+    settings:    {zh:'设置',      en:'Settings'},
+    search:      {zh:'搜索...',   en:'Search...'},
+    importBtn:   {zh:'从 GitHub 导入', en:'Import from GitHub'},
+    batchTrans:  {zh:'批量翻译',  en:'Batch Translate'},
+    refresh:     {zh:'刷新',      en:'Refresh'},
+    configDir:   {zh:'配置目录',  en:'Config dir'},
+    active:      {zh:'启用',      en:'active'},
+    disabled:    {zh:'禁用',      en:'disabled'},
+    broken:      {zh:'损坏',      en:'broken'},
+    selectSkill: {zh:'← 选择一个 Skill', en:'← Select a skill'},
+    name:        {zh:'名称',      en:'Name'},
+    type:        {zh:'类型',      en:'Type'},
+    status:      {zh:'状态',      en:'Status'},
+    descEn:      {zh:'描述 (英文)', en:'Description (EN)'},
+    descCn:      {zh:'描述 (中文)', en:'Description (CN)'},
+    triggers:    {zh:'触发词',    en:'Trigger Keywords'},
+    files:       {zh:'文件',      en:'Files'},
+    toggle:      {zh:'启用/禁用', en:'Enable / Disable'},
+    delete:      {zh:'删除',      en:'Delete'},
+    save:        {zh:'保存',      en:'Save'},
+    version:     {zh:'版本',      en:'Version'},
+    marketplace: {zh:'市场',      en:'Marketplace'},
+    author:      {zh:'作者',      en:'Author'},
+    homepage:    {zh:'主页',      en:'Homepage'},
+    repository:  {zh:'仓库',      en:'Repository'},
+    license:     {zh:'许可证',    en:'License'},
+    skillsInPlugin:{zh:'Skills',  en:'Skills'},
+    command:     {zh:'命令',      en:'Command'},
+    editConfig:  {zh:'编辑配置',  en:'Edit Config'},
+    event:       {zh:'事件',      en:'Event'},
+    timeout:     {zh:'超时',      en:'Timeout'},
+    invocation:  {zh:'调用',      en:'Invocation'},
+    path:        {zh:'路径',      en:'Path'},
+    size:        {zh:'大小',      en:'Size'},
+    clearCache:  {zh:'清除缓存',  en:'Clear Cache'},
+    saveApi:     {zh:'保存 API 设置', en:'Save API Settings'},
+    cacheExists: {zh:'缓存存在',  en:'Cache exists'},
+    cacheEmpty:  {zh:'缓存: 空',  en:'Cache: empty'},
+    autoTrans:   {zh:'自动翻译: 开启', en:'auto-translate: on'},
+    from:        {zh:'来自',      en:'from'},
+    ready:       {zh:'就绪',      en:'Ready'},
+    confirmDel:  {zh:'此操作不可撤销，确认删除？', en:'This action CANNOT be undone. Confirm delete?'},
+  }
+};
+/* ═══════════════════════════════════════════════════════════════════════
+   APP STATE
+   ═══════════════════════════════════════════════════════════════════════ */
+let _data = { skills:[], plugins:[], mcp:[], hooks:[], memory:[], claudemd:[], translations:{} };
+let _page = 'dashboard';
+
+/* ── RPC ────────────────────────────────────────────────────────────── */
+async function rpc(method, params) {
+  try { const r = await window.ccm.rpc(method, params||{}); return r&&r.result!==undefined ? r.result : r; }
+  catch(e) { console.error('RPC:',method,e); return null; }
+}
+
+/* ── Status ─────────────────────────────────────────────────────────── */
+function status(msg) { document.getElementById('status-text').textContent = msg; }
+
+/* ── Theme ───────────────────────────────────────────────────────────── */
+function applyTheme(key) {
+  document.documentElement.setAttribute('data-theme', key);
+  localStorage.setItem('claude-theme', key);
+}
+applyTheme(localStorage.getItem('claude-theme') || 'dark');
+
+/* ── Navigation ─────────────────────────────────────────────────────── */
+const NAV = [
+  {id:'dashboard', svg:'<rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/>', tip:'Dashboard (Ctrl+1)'},
+  {id:'skills',    svg:'<circle cx="5.5" cy="5.5" r="2.5"/><path d="M10 10l4 4M7.5 5.5l6-6"/>', tip:'Skills (Ctrl+2)'},
+  {id:'plugins',   svg:'<rect x="2" y="2" width="12" height="4" rx="1"/><rect x="2" y="10" width="12" height="4" rx="1"/><circle cx="8" cy="8" r="1.5"/>', tip:'Plugins (Ctrl+3)'},
+  {id:'mcp',       svg:'<path d="M2 4l6-3 6 3v5l-6 3-6-3z"/><path d="M8 12.5v-5M2 4.5L8 7l6-2.5"/>', tip:'MCP (Ctrl+4)'},
+  {id:'hooks',     svg:'<path d="M3 8h10M8 3v10"/><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="13" r="1.5"/><circle cx="13" cy="8" r="1.5"/>', tip:'Hooks (Ctrl+5)'},
+  {id:'claudemd',  svg:'<path d="M4 2h6l4 4v8a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M4 13h8M4 10h5"/>', tip:'CLAUDE.md (Ctrl+6)'},
+  {id:'memory',    svg:'<rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M6 6v4M8 6v4M10 6v2"/>', tip:'Memory (Ctrl+7)'},
+  {id:'settings',  svg:'<circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M2.5 4.5l1.5 2.5M12 9l1.5 2.5M1 8h2M13 8h2M4.5 2.5L7 4M9 12l2.5 1.5"/>', tip:'Settings (Ctrl+8)'},
+];
+
+function renderSidebar() {
+  document.getElementById('sidebar').innerHTML = NAV.map((n, i) => {
+    const name = T.tr(n.id);
+    return `<button class="side-icon" data-page="${n.id}" onclick="navTo('${n.id}')" title="${name} (Ctrl+${i+1})">
+      <svg viewBox="0 0 16 16">${n.svg}</svg><span class="tooltip">${name} (Ctrl+${i+1})</span>
+    </button>`;
+  }).join('') + '<div class="side-spacer"></div><span class="side-brand">CM</span>';
+}
+
+function navTo(key) {
+  document.querySelectorAll('.side-icon').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`.side-icon[data-page="${key}"]`);
+  if (btn) btn.classList.add('active');
+  _page = key;
+  buildPage(key);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key >= '1' && e.key <= '8') { e.preventDefault(); navTo(NAV[e.key-1].id); }
+});
+
+/* ── Page Builder ───────────────────────────────────────────────────── */
+async function buildPage(key) {
+  const main = document.getElementById('main-content');
+  main.classList.add('fade-in');
+
+  switch(key) {
+    case 'dashboard': await buildDashboard(main); break;
+    case 'skills': await buildSkills(main); break;
+    case 'plugins': await buildPlugins(main); break;
+    case 'mcp': await buildMcp(main); break;
+    case 'hooks': await buildHooks(main); break;
+    case 'claudemd': await buildClaudeMd(main); break;
+    case 'memory': await buildMemory(main); break;
+    case 'settings': await buildSettings(main); break;
+  }
+}
+
+/* ── Dashboard (exact copy of original HTML structure) ──────────────── */
+async function buildDashboard(main) {
+  const s = await rpc('dashboard.summary');
+  main.innerHTML = `
+    <div class="toolbar">
+      <span class="page-title">Claude Manage</span>
+      <span style="font-size:12px;color:var(--text-muted)">${s?T.tr('configDir')+': '+s.claude_dir:''}</span>
+    </div>
+    <div style="flex:1;overflow-y:auto">
+      <div class="dash-grid" id="dash-cards"></div>
+    </div>
+    <div class="statusbar"><span class="st-left">${T.tr('ready')}</span><span class="st-right">v2.0</span></div>`;
+  if (!s) return;
+  const act = T.tr('active'), dis = T.tr('disabled'), brk = T.tr('broken');
+  document.getElementById('dash-cards').innerHTML = [
+    {k:'skills',   l:T.tr('skills'),      n:s.skill_count,    d:`${s.skill_active} ${act} · ${s.skill_disabled} ${dis} · ${s.skill_broken} ${brk}`, cls:s.skill_broken?'error':''},
+    {k:'plugins',  l:T.tr('plugins'),     n:s.plugin_count,   d:T.tr('from')+' marketplaces'},
+    {k:'mcp',      l:T.tr('mcp'),         n:s.mcp_count,      d:`${s.mcp_count} server${s.mcp_count!==1?'s':''}`},
+    {k:'hooks',    l:T.tr('hooks'),       n:s.hook_count,     d:`${s.hook_count} hooks`},
+    {k:'memory',   l:T.tr('memory'),      n:s.memory_count,   d:`${s.memory_count} files`},
+    {k:'claudemd', l:T.tr('claudemd'),    n:s.claudemd_count, d:`${s.claudemd_count} files`},
+  ].map(c => `<div class="dash-card ${c.cls}" onclick="navTo('${c.k}')">
+    <div class="dc-label">${c.l}</div><div class="dc-count">${c.n}</div><div class="dc-sub">${c.d}</div>
+  </div>`).join('');
+}
+
+/* ── Skills (exact copy of original HTML structure) ─────────────────── */
+async function buildSkills(main) {
+  _data.skills = await rpc('skills.list') || [];
+  _data.translations = await rpc('skills.translations') || {};
+  main.innerHTML = `
+    <div class="toolbar">
+      <span class="page-title">${T.tr('skills')}</span><div class="spacer"></div>
+      <input class="search-input" placeholder="${T.tr('search')}" oninput="filterSkills(this.value)">
+      <button class="btn primary" onclick="importSkillDialog()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M2 8h12"/></svg>${T.tr('importBtn')}</button>
+      <button class="btn" onclick="batchTranslateSkills()">${T.tr('batchTrans')}</button>
+      <button class="btn" onclick="navTo('skills')">${T.tr('refresh')}</button>
+    </div>
+    <div class="split">
+      <div class="skill-list-pane">
+        <div class="skill-list-header"><span>${T.tr('name')}</span><span>${T.tr('type')}</span><span>${T.tr('status')}</span></div>
+        <div class="skill-list-body" id="skills-list"></div>
+      </div>
+      <div class="detail-pane" id="skills-detail">
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted)">${T.tr('selectSkill')}</div>
+      </div>
+    </div>
+    <div class="statusbar"><span class="st-left" id="skills-status">${T.tr('skills')}: ${_data.skills.length} total</span><span class="st-right">${T.tr('autoTrans')}</span></div>`;
+  renderSkillsList();
+}
+
+function renderSkillsList(filter) {
+  const ft = (filter||'').toLowerCase();
+  const list = _data.skills.filter(s => !ft || s.display_name.toLowerCase().includes(ft) || s.description.toLowerCase().includes(ft));
+  const icons = {directory:{t:'▸',c:'skill-icon-dir'},symlink:{t:'↗',c:'skill-icon-link'},'standalone-md':{t:'◻',c:'skill-icon-file'}};
+  const sc = {active:{d:'green',s:'active'},disabled:{d:'gray',s:'disabled'},broken:{d:'red',s:'broken'}};
+  document.getElementById('skills-list').innerHTML = list.map(s => {
+    const ic = icons[s.type]||icons.directory;
+    const st = sc[s.status]||sc.active;
+    return `<div class="skill-row" data-name="${s.name}" onclick="showSkillDetail('${s.name.replace(/'/g,"\\'")}')">
+      <span class="s-name"><span class="${ic.c}">${ic.t}</span>${s.display_name}</span>
+      <span class="s-type">${s.type}</span>
+      <span class="s-status"><span class="status-badge ${st.s}"><span class="status-dot ${st.d}"></span>${s.status}</span></span>
+    </div>`;
+  }).join('');
+}
+
+function filterSkills(v) { renderSkillsList(v); }
+
+function showSkillDetail(name) {
+  const s = _data.skills.find(x => x.name === name);
+  if (!s) return;
+  document.querySelectorAll('#skills-list .skill-row').forEach(r => r.classList.remove('selected'));
+  const row = document.querySelector(`#skills-list .skill-row[data-name="${name.replace(/'/g,"\\'")}"]`);
+  if (row) row.classList.add('selected');
+
+  const cn = _data.translations[name] || '';
+  const sc = {active:'var(--green)',disabled:'var(--text-muted)',broken:'var(--red)'};
+  const triggers = (s.triggers||[]).map(t => `<span class="tag">${t}</span>`).join(' ');
+  const files = (s.files||[]).slice(0,30).map(f => `<span>${f}</span>`).join('');
+  const extra = (s.files||[]).length > 30 ? `<span>... +${s.files.length - 30} more</span>` : '';
+
+  document.getElementById('skills-detail').innerHTML = `
+    <div class="detail-header">
+      <div class="dh-name">${s.display_name}</div>
+      <div class="dh-meta">
+        <div class="dh-meta-item"><span class="label">${T.tr('type')}</span><span class="value">${s.type}</span></div>
+        ${s.invocation?`<div class="dh-meta-item"><span class="label">${T.tr('invocation')}</span><span class="value">${s.invocation}</span></div>`:''}
+        <div class="dh-meta-item"><span class="label">${T.tr('status')}</span><span class="value" style="color:${sc[s.status]}">${s.status.toUpperCase()}</span></div>
+        <div class="dh-meta-item"><span class="label">${T.tr('path')}</span><span class="value">${s.path}</span></div>
+      </div>
+    </div>
+    <div class="detail-body">
+      ${s.description?`<div class="desc-block"><div class="dbl-label">${T.tr('descEn')}</div><div class="dbl-text">${s.description}</div></div>`:''}
+      ${cn?`<div class="desc-block"><div class="dbl-text cn">${cn}</div></div>`:''}
+      ${triggers?`<div class="desc-block"><div class="dbl-label">${T.tr('triggers')}</div><div class="tags-row">${triggers}</div></div>`:''}
+      ${files?`<div class="desc-block"><div class="dbl-label">${T.tr('files')}</div><div class="file-list">${files}${extra}</div></div>`:''}
+    </div>
+    <div class="detail-actions">
+      <button class="btn" onclick="toggleSkill('${name.replace(/'/g,"\\'")}')">${T.tr('toggle')}</button>
+      <button class="btn danger" onclick="deleteSkill('${name.replace(/'/g,"\\'")}')">${T.tr('delete')}</button>
+      <div class="spacer"></div>
+    </div>`;
+
+  // Auto-translate
+  if (!cn && s.description) autoTranslate(name, s.description);
+}
+
+async function autoTranslate(name, text) {
+  const r = await rpc('translate.batch', {domain:'skills', items:[{name,text}]});
+  if (r && r[name]) { _data.translations[name] = r[name]; showSkillDetail(name); }
+}
+
+async function toggleSkill(name) {
+  await rpc('skills.toggle', {name});
+  _data.skills = await rpc('skills.list') || [];
+  renderSkillsList();
+  showSkillDetail(name);
+  document.getElementById('skills-status').textContent = `Skills: ${_data.skills.length} total`;
+}
+
+async function deleteSkill(name) {
+  if (!confirm(`Delete "${name}"?\n${T.tr('confirmDel')}`)) return;
+  await rpc('skills.delete', {name});
+  _data.skills = await rpc('skills.list') || [];
+  renderSkillsList();
+  document.getElementById('skills-detail').innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted)">${T.tr('selectSkill')}</div>`;
+  document.getElementById('skills-status').textContent = `${T.tr('skills')}: ${_data.skills.length} total`;
+}
+
+async function batchTranslateSkills() {
+  const items = _data.skills.filter(s => s.description).map(s => ({name:s.name,text:s.description}));
+  if (!items.length) { status('No skills to translate'); return; }
+  const r = await rpc('translate.batch', {domain:'skills', items});
+  if (r && !r.error) { Object.assign(_data.translations, r); status(`Translated ${Object.keys(r).length} skills`); }
+  else { const msg = typeof r?.error === 'string' ? r.error : (r?.error?.message || 'Translation failed'); alert(msg); status(msg); }
+}
+
+async function batchTranslatePlugins() {
+  const items = _data.plugins.filter(p => p.description).map(p => ({name:p.name,text:p.description}));
+  if (!items.length) { status('No plugins to translate'); return; }
+  const r = await rpc('translate.batch', {domain:'plugins', items});
+  if (r && !r.error) {
+    for (const k in r) { _data.pluginTranslations[k] = r[k]; }
+    status(`Translated ${Object.keys(r).length} plugins`);
+  }
+  else { const msg = typeof r?.error === 'string' ? r.error : (r?.error?.message || 'Translation failed'); alert(msg); status(msg); }
+}
+
+async function importSkillDialog() {
+  const url = prompt('GitHub URL to import skill from:');
+  if (!url) return;
+  status('Importing...');
+  const r = await rpc('skills.import', {url});
+  if (r?.success) { status(`Imported: ${r.skill_name}`); _data.skills = await rpc('skills.list')||[]; renderSkillsList(); }
+  else { alert(r?.message || 'Import failed'); status('Import failed'); }
+}
+
+/* ── Plugins ───────────────────────────────────────────────────────── */
+async function buildPlugins(main) {
+  _data.plugins = await rpc('plugins.list') || [];
+  _data.pluginTranslations = await rpc('plugins.translations') || {};
+  const groups = {}; _data.plugins.forEach(p => { const m = p.marketplace||'unknown'; if(!groups[m]) groups[m]=[]; groups[m].push(p); });
+  main.innerHTML = `
+    <div class="toolbar"><span class="page-title">${T.tr('plugins')}</span><div class="spacer"></div>
+      <button class="btn" onclick="batchTranslatePlugins()">${T.tr('batchTrans')}</button>
+      <button class="btn" onclick="navTo('plugins')">${T.tr('refresh')}</button></div>
+    <div class="split">
+      <div class="skill-list-pane" style="width:280px">
+        <div class="skill-list-header"><span>${T.tr('name')}</span><span>${T.tr('version')}</span></div>
+        <div class="skill-list-body" id="plugins-list"></div>
+      </div>
+      <div class="detail-pane" id="plugins-detail">
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted)">← Select a plugin</div>
+      </div>
+    </div>
+    <div class="statusbar"><span class="st-left">${T.tr('plugins')}: ${_data.plugins.length} ${T.tr('from')} ${Object.keys(groups).length} marketplaces</span></div>`;
+
+  document.getElementById('plugins-list').innerHTML = Object.keys(groups).sort().map(m =>
+    `<div style="padding:6px 12px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase">${m}</div>` +
+    groups[m].map(p => `<div class="skill-row" onclick="showPluginDetail('${p.name.replace(/'/g,"\\'")}')">
+      <span class="s-name" style="flex:1">${p.name}</span><span class="s-type">v${p.version}</span></div>`).join('')
+  ).join('');
+}
+
+function showPluginDetail(name) {
+  const p = _data.plugins.find(x => x.name === name);
+  if (!p) return;
+  document.querySelectorAll('#plugins-list .skill-row').forEach(r => r.classList.remove('selected'));
+  const cn = _data.pluginTranslations[name] || '';
+  document.getElementById('plugins-detail').innerHTML = `
+    <div class="detail-header">
+      <div class="dh-name">${p.name} <span style="font-size:13px;font-weight:400;color:var(--text-muted)">v${p.version}</span></div>
+      <div class="dh-meta">
+        <div class="dh-meta-item"><span class="label">${T.tr('marketplace')}</span><span class="value">${p.marketplace}</span></div>
+        <div class="dh-meta-item"><span class="label">${T.tr('author')}</span><span class="value">${p.author}${p.author_email?` (${p.author_email})`:''}</span></div>
+        ${p.homepage?`<div class="dh-meta-item"><span class="label">${T.tr('homepage')}</span><span class="value">${p.homepage}</span></div>`:''}
+        ${p.repository?`<div class="dh-meta-item"><span class="label">${T.tr('repository')}</span><span class="value">${p.repository}</span></div>`:''}
+        ${p.license?`<div class="dh-meta-item"><span class="label">${T.tr('license')}</span><span class="value">${p.license}</span></div>`:''}
+      </div>
+    </div>
+    <div class="detail-body">
+      ${p.description?`<div class="desc-block"><div class="dbl-label">Description</div><div class="dbl-text">${p.description}</div></div>`:''}
+      ${cn?`<div class="desc-block"><div class="dbl-text cn">${cn}</div></div>`:''}
+      ${p.skills.length?`<div class="desc-block"><div class="dbl-label">${T.tr('skillsInPlugin')} (${p.skills.length})</div><div class="file-list">${p.skills.map(sk=>`<span>${sk.name}: ${sk.description||''}</span>`).join('')}</div></div>`:''}
+    </div>`;
+
+  if (!cn && p.description) autoTranslatePlugin(p.name, p.description);
+}
+
+async function autoTranslatePlugin(name, text) {
+  const r = await rpc('translate.batch', {domain:'plugins', items:[{name,text}]});
+  if (r && r[name]) { _data.pluginTranslations[name] = r[name]; showPluginDetail(name); }
+}
+
+/* ── MCP ───────────────────────────────────────────────────────────── */
+async function buildMcp(main) {
+  _data.mcp = await rpc('mcp.list') || [];
+  main.innerHTML = `
+    <div class="toolbar"><span class="page-title">${T.tr('mcp')}</span><div class="spacer"></div>
+      <button class="btn" onclick="editMcpConfig()">${T.tr('editConfig')}</button>
+      <button class="btn" onclick="navTo('mcp')">${T.tr('refresh')}</button></div>
+    <div class="table-wrap"><table class="data-table" id="mcp-table">
+      <thead><tr><th>${T.tr('name')}</th><th>${T.tr('type')}</th><th>${T.tr('command')}</th><th>Args</th></tr></thead><tbody></tbody></table></div>
+    <div class="statusbar"><span class="st-left">${T.tr('mcp')}: ${_data.mcp.length}</span></div>`;
+  document.querySelector('#mcp-table tbody').innerHTML = _data.mcp.map(s =>
+    `<tr><td>${s.name}</td><td>${s.type}</td><td>${s.command}</td><td>${(s.args||[]).join(' ')}</td></tr>`).join('');
+}
+
+async function editMcpConfig() {
+  const raw = await rpc('mcp.get_raw');
+  const text = prompt('Edit .mcp.json (JSON):', JSON.stringify(raw, null, 2));
+  if (!text) return;
+  try { const cfg = JSON.parse(text); await rpc('mcp.save',{config:cfg}); navTo('mcp'); }
+  catch(e) { alert('Invalid JSON: '+e.message); }
+}
+
+/* ── Hooks ──────────────────────────────────────────────────────────── */
+async function buildHooks(main) {
+  _data.hooks = await rpc('hooks.list') || [];
+  const groups = {}; _data.hooks.forEach(h => { if(!groups[h.event]) groups[h.event]=[]; groups[h.event].push(h); });
+  const evtCount = Object.keys(groups).length;
+  main.innerHTML = `
+    <div class="toolbar"><span class="page-title">${T.tr('hooks')}</span><div class="spacer"></div>
+      <button class="btn" onclick="navTo('hooks')">${T.tr('refresh')}</button></div>
+    <div class="table-wrap"><table class="data-table" id="hooks-table">
+      <thead><tr><th>${T.tr('event')}</th><th>${T.tr('type')}</th><th>${T.tr('command')}</th><th>${T.tr('timeout')}</th></tr></thead><tbody></tbody></table></div>
+    <div class="statusbar"><span class="st-left">${T.tr('hooks')}: ${_data.hooks.length} / ${evtCount} ${T.tr('event')}s</span></div>`;
+  document.querySelector('#hooks-table tbody').innerHTML = Object.keys(groups).sort().map(ev =>
+    `<tr><td colspan="4" style="font-weight:600;color:var(--text-muted);font-size:11px;text-transform:uppercase">${ev}</td></tr>` +
+    groups[ev].map(h => `<tr><td style="padding-left:20px">${h.matcher||'(default)'}</td><td>${h.type}</td><td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.command}</td><td>${h.timeout}s</td></tr>`).join('')
+  ).join('');
+}
+
+/* ── CLAUDE.md ──────────────────────────────────────────────────────── */
+async function buildClaudeMd(main) {
+  _data.claudemd = await rpc('claudemd.list') || [];
+  main.innerHTML = `
+    <div class="toolbar"><span class="page-title">${T.tr('claudemd')}</span><div class="spacer"></div>
+      <button class="btn primary" onclick="saveClaudeMd()">${T.tr('save')}</button>
+      <button class="btn" onclick="navTo('claudemd')">${T.tr('refresh')}</button></div>
+    <div class="split">
+      <div class="skill-list-pane" style="width:280px">
+        <div class="skill-list-header"><span>${T.tr('name')}</span><span>${T.tr('size')}</span></div>
+        <div class="skill-list-body" id="claudemd-list"></div>
+      </div>
+      <div class="editor-area">
+        <div style="padding:8px 24px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border)" id="claudemd-path">Select a file</div>
+        <textarea id="claudemd-editor" placeholder="Select a CLAUDE.md file to edit..."></textarea>
+      </div>
+    </div>
+    <div class="statusbar"><span class="st-left">${T.tr('claudemd')}: ${_data.claudemd.length} files</span></div>`;
+
+  const listEl = document.getElementById('claudemd-list');
+  listEl.innerHTML = _data.claudemd.map((c, i) =>
+    `<div class="skill-row" data-claudemd-idx="${i}">
+      <span class="s-name" style="flex:1">${c.label}</span>
+      <span class="s-type">${c.size<1024?c.size+'B':(c.size/1024).toFixed(1)+'KB'}</span></div>`).join('');
+
+  // Event delegation — avoids backslash-in-onclick escaping bugs
+  listEl.addEventListener('click', function(e) {
+    const row = e.target.closest('.skill-row');
+    if (!row) return;
+    const idx = parseInt(row.getAttribute('data-claudemd-idx'));
+    if (idx >= 0 && idx < _data.claudemd.length) {
+      openClaudeMd(idx);
+    }
+  });
+}
+
+function openClaudeMd(idx) {
+  const c = _data.claudemd[idx];
+  if (!c) return;
+  document.querySelectorAll('#claudemd-list .skill-row').forEach(r => r.classList.remove('selected'));
+  const row = document.querySelector(`#claudemd-list [data-claudemd-idx="${idx}"]`);
+  if (row) row.classList.add('selected');
+  document.getElementById('claudemd-path').textContent = c.path;
+  document.getElementById('claudemd-editor').value = c.content;
+}
+
+async function saveClaudeMd() {
+  const path = document.getElementById('claudemd-path').textContent;
+  const content = document.getElementById('claudemd-editor').value;
+  if (!path || path === 'Select a file') { status('No file selected'); return; }
+  await rpc('claudemd.save', {path, content});
+  status(`Saved: ${path}`);
+  _data.claudemd = await rpc('claudemd.list') || [];
+}
+
+/* ── Memory ─────────────────────────────────────────────────────────── */
+async function buildMemory(main) {
+  _data.memory = await rpc('memory.list') || [];
+  main.innerHTML = `
+    <div class="toolbar"><span class="page-title">${T.tr('memory')}</span><div class="spacer"></div>
+      <button class="btn" onclick="navTo('memory')">${T.tr('refresh')}</button></div>
+    <div class="table-wrap"><table class="data-table" id="memory-table">
+      <thead><tr><th>${T.tr('name')}</th><th>${T.tr('type')}</th><th>Description</th><th style="width:60px"></th></tr></thead><tbody></tbody></table></div>
+    <div class="statusbar"><span class="st-left">${T.tr('memory')}: ${_data.memory.length} files</span></div>`;
+  document.querySelector('#memory-table tbody').innerHTML = _data.memory.map(m =>
+    `<tr><td style="cursor:pointer" onclick="showMemoryContent('${m.name.replace(/'/g,"\\'")}')">${m.name}</td>
+      <td>${m.memory_type}</td><td>${m.description||''}</td>
+      <td><button class="btn danger" style="height:22px;padding:0 8px;font-size:11px" onclick="event.stopPropagation();deleteMemory('${m.name.replace(/'/g,"\\'")}')">Del</button></td></tr>`).join('');
+}
+
+function showMemoryContent(name) {
+  const m = _data.memory.find(x => x.name === name);
+  if (!m) return;
+  alert(m.content.substring(0, 2000));
+}
+
+async function deleteMemory(name) {
+  if (!confirm(`Delete "${name}"?\n${T.tr('confirmDel')}`)) return;
+  await rpc('memory.delete', {name});
+  navTo('memory');
+}
+
+/* ── Settings (exact copy of original HTML structure) ───────────────── */
+function buildSettings(main) {
+  const t = localStorage.getItem('claude-theme') || 'dark';
+  main.innerHTML = `
+    <div class="toolbar"><span class="page-title">${T.tr('settings')}</span></div>
+    <div style="flex:1;overflow-y:auto;padding:24px 28px;display:flex;flex-direction:column;gap:16px">
+      <div class="settings-section">
+        <div class="ss-title">Theme / 主题</div>
+        <div class="settings-row">
+          <span class="sr-label">Theme</span>
+          <select id="set-theme" onchange="applyTheme(this.value);navTo('settings')">
+            <option value="dark" ${t==='dark'?'selected':''}>OLED Dark</option>
+            <option value="white" ${t==='white'?'selected':''}>Clean White</option>
+            <option value="glass-light" ${t==='glass-light'?'selected':''}>Glass (Light)</option>
+            <option value="glass-dark" ${t==='glass-dark'?'selected':''}>Glass (Dark)</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="ss-title">Baidu Translate API</div>
+        <div class="settings-row"><span class="sr-label">App ID</span><input type="text" id="set-appid" placeholder="App ID"></div>
+        <div class="settings-row"><span class="sr-label">Secret Key</span><input type="password" id="set-secret" placeholder="Secret Key"></div>
+        <button class="btn primary" onclick="saveSettings()" style="margin-top:6px">${T.tr('saveApi')}</button>
+      </div>
+      <div class="settings-section">
+        <div class="ss-title">Translation Cache</div>
+        <div class="settings-row">
+          <span class="sr-label" id="cache-info">...</span>
+          <button class="btn danger" onclick="clearCache()">${T.tr('clearCache')}</button>
+        </div>
+      </div>
+    </div>
+    <div class="statusbar"><span class="st-left">${T.tr('ready')}</span></div>`;
+  loadSettings();
+}
+
+async function loadSettings() {
+  const s = await rpc('settings.get');
+  if (!s) return;
+  const api = s.baidu_api || {};
+  const appid = document.getElementById('set-appid');
+  const secret = document.getElementById('set-secret');
+  if (appid) appid.value = api.app_id || '';
+  if (secret) secret.value = api.secret_key || '';
+  const cache = document.getElementById('cache-info');
+  if (cache) cache.textContent = s.translate_cache_exists ? T.tr('cacheExists') : T.tr('cacheEmpty');
+}
+
+async function saveSettings() {
+  const api = {app_id:document.getElementById('set-appid').value.trim(), secret_key:document.getElementById('set-secret').value.trim()};
+  await rpc('settings.save', {baidu_api:api});
+  status('Settings saved');
+}
+
+async function clearCache() {
+  if (!confirm('Clear translation cache?')) return;
+  await rpc('settings.clear_cache');
+  status('Cache cleared');
+  loadSettings();
+}
+
+/* ── Init ────────────────────────────────────────────────────────────── */
+renderSidebar();
+navTo('dashboard');
+</script>
+</body>
+</html>

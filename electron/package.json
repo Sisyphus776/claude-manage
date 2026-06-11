@@ -1,0 +1,45 @@
+{
+  "name": "claude-manage",
+  "version": "2.0.0",
+  "description": "Claude Code configuration manager — desktop GUI",
+  "main": "main.js",
+  "author": "董智帅",
+  "license": "MIT",
+  "repository": "https://github.com/dongzhishuai/claude-manage",
+  "scripts": {
+    "start": "electron .",
+    "build:python": "cd .. && python -m PyInstaller electron/bridge.spec --distpath electron/dist-python --workpath electron/build-python --noconfirm",
+    "build": "npm run build:python && electron-builder",
+    "build:unpacked": "npm run build:python && electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.claudemanage.app",
+    "productName": "Claude Manage",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*"
+    ],
+    "extraResources": {
+      "from": "dist-python/bridge.exe",
+      "to": "bridge.exe"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "rcedit": "^5.0.2"
+  }
+}

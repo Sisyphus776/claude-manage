@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Claude Manage — Icon Design Gallery</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --border: #1e1e1e;
+    --accent: #58a6ff;
+    --accent-dim: rgba(88,166,255,0.12);
+    --text: #e4e4e4;
+    --text-muted: #666;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ──────────────────────────────────────────────── */
+  .header {
+    padding: 48px 32px 32px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  .header .sub {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+  .header .accent { color: var(--accent); }
+
+  /* ── Gallery Layout ──────────────────────────────────────── */
+  .gallery {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+    gap: 32px;
+  }
+
+  /* ── Icon Card ───────────────────────────────────────────── */
+  .icon-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .icon-card:hover {
+    border-color: rgba(88,166,255,0.25);
+    box-shadow: 0 0 40px rgba(88,166,255,0.04);
+  }
+
+  .icon-card-header {
+    padding: 18px 20px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .icon-card-header .num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-dim);
+    width: 22px; height: 22px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .icon-card-header .title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+  .icon-card-header .desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+
+  /* ── Icon Display Area ───────────────────────────────────── */
+  .icon-display {
+    padding: 28px 20px 20px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    justify-content: center;
+    background: radial-gradient(ellipse at center, rgba(88,166,255,0.03) 0%, transparent 70%);
+  }
+  .icon-display .hero {
+    width: 120px; height: 120px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .icon-display .hero svg {
+    width: 100%; height: 100%;
+    filter: drop-shadow(0 2px 12px rgba(88,166,255,0.18));
+  }
+
+  /* ── Size Variants ───────────────────────────────────────── */
+  .size-strip {
+    padding: 16px 20px 22px;
+    display: flex;
+    align-items: flex-end;
+    gap: 22px;
+    justify-content: center;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    flex-wrap: wrap;
+  }
+  .size-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .size-item .sz-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+  }
+  .size-item .sz-box {
+    border-radius: 4px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .size-item .sz-box svg {
+    display: block;
+  }
+
+  /* ── Selection Marker ────────────────────────────────────── */
+  .top-pick {
+    position: relative;
+  }
+  .top-pick::before {
+    content: '★ RECOMMENDED';
+    position: absolute;
+    top: -1px; right: 20px;
+    background: var(--accent);
+    color: #000;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 0 0 4px 4px;
+    letter-spacing: 0.6px;
+    z-index: 2;
+  }
+
+  /* ── Footer ──────────────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    padding: 32px;
+    border-top: 1px solid var(--border);
+  }
+  .footer .note {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+  .footer .note strong { color: var(--text); }
+
+  /* ── Responsive ──────────────────────────────────────────── */
+  @media (max-width: 520px) {
+    .gallery { grid-template-columns: 1fr; padding: 20px 12px; }
+    .icon-display { gap: 16px; }
+    .icon-display .hero { width: 90px; height: 90px; }
+    .size-strip { gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span class="accent">Claude Manage</span> Icon Design</h1>
+  <p class="sub">7 distinct concepts · SVG source · OLED Dark · Accent <span class="accent">#58A6FF</span></p>
+</div>
+
+<div class="gallery">
+
+  <!-- ═══ 1. CM GEO MONOGRAM ═══ -->
+  <div class="icon-card" id="icon-01">
+    <div class="icon-card-header">
+      <span class="num">1</span>
+      <span class="title">CM Geometric Monogram</span>
+      <span class="desc">Letterform</span>
+    </div>
+    <div class="icon-display">
+      <div class="hero">
+        <!-- CM Monogram — interlocking geometric C and M -->
+        <svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="256" y2="256">
+              <stop offset="0%" stop-color="#58a6ff"/>
+              <stop offset="100%" stop-color="#3b82f6"/>
+            </linearGradient>
+          </defs>
+          <!-- C shape: thick arc -->
+          <path d="M88 64C56 64 48 92 48 128c0 36 8 64 40 64"
+                stroke="url(#g1)" stroke-width="36" stroke-linecap="round" fill="none"/>
+          <!-- M shape: two diagonal strokes -->
+          <path d="M112 192V64l32 64 32-64v128" stroke="#58a6ff" stroke-width="22"
+                stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.85"/>
+        </svg>
+      </div>
+    </div>
+    <div class="size-strip" id="strip-1"></div>
+  </div>
+
+  <!-- ═══ 2. CONTROL HUB ═══ -->
+  <div class="icon-card" id="icon-02">
+    <div class="icon-card-header">
+      <span class="num">2</span>
+      <span class="title">Control Hub</span>
+      <span class="desc">Network</span>
+    </div>
+    <div class="icon-display">
+      <div class="hero">
+        <!-- Central hub with 6 radiating connections -->
+        <svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="g2" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0%" stop-color="#58a6ff"/>
+              <stop offset="100%" stop-color="#1d4ed8"/>
+            </radialGradient>
+          </defs>
+          <!-- Connection lines -->
+          <g stroke="#58a6ff" stroke-width="5" stroke-linecap="round" opacity="0.35">
+            <line x1="128" y1="128" x2="128" y2="36"/>
+            <line x1="128" y1="128" x2="215" y2="78"/>
+            <line x1="128" y1="128" x2="215" y2="178"/>
+            <line x1="128" y1="128" x2="128" y2="220"/>
+            <line x1="128" y1="128" x2="41" y2="178"/>
+            <line x1="128" y1="128" x2="41" y2="78"/>
+          </g>
+          <!-- Outer nodes -->
+          <circle cx="128" cy="36" r="14" fill="#58a6ff" opacity="0.7"/>
+          <circle cx="215" cy="78" r="14" fill="#58a6ff" opacity="0.7"/>
+          <circle cx="215" cy="178" r="14" fill="#58a6ff" opacity="0.7"/>
+          <circle cx="128" cy="220" r="14" fill="#58a6ff" opacity="0.7"/>
+          <circle cx="41" cy="178" r="14" fill="#58a6ff" opacity="0.7"/>
+          <circle cx="41" cy="78" r="14" fill="#58a6ff" opacity="0.7"/>
+          <!-- Central hub -->
+          <circle cx="128" cy="128" r="36" fill="url(#g2)"/>
+          <circle cx="128" cy="128" r="14" fill="#0a0a0a"/>
+        </svg>
+      </div>
+    </div>
+    <div class="size-strip" id="strip-2"></div>
+  </div>
+
+  <!-- ═══ 3. MODULE GRID ═══ -->
+  <div class="icon-card" id="icon-03">
+    <div class="icon-card-header">
+      <span class="num">3</span>
+      <span class="title">Module Grid</span>
+      <span class="desc">Blocks</span>
+    </div>
+    <div class="icon-display">
+      <div class="hero">
+        <!-- 2×3 grid of connected rounded rects -->
+        <svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g3a" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#58a6ff" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="#3b82f6"/>
+            </linearGradient>
+          </defs>
+          <!-- Grid lines -->
+          <g stroke="#58a6ff" stroke-width="4" opacity="0.2" stroke-linecap="round">
+            <line x1="128" y1="52" x2="128" y2="204"/>
+            <line x1="56" y1="128" x2="200" y2="128"/>
+          </g>
+          <!-- Modules: 2 columns × 3 rows -->
+          <rect x="40" y="60" width="72" height="52" rx="12" fill="url(#g3a)"/>
+          <rect x="144" y="60" width="72" height="52" rx="12" fill="#58a6ff" opacity="0.6"/>
+          <rect x="40" y="132" width="72" height="52" rx="12" fill="#58a6ff" opacity="0.6"/>
+          <rect x="144" y="132" width="72" height="52" rx="12" fill="#58a6ff" opacity="0.85"/>
+          <rect x="40" y="152" width="72" height="52" rx="12" fill="#58a6ff" opacity="0.4" transform="translate(0,48) scale(1,0.6)"/>
+          <rect x="144" y="152" width="72" height="52" rx="12" fill="#58a6ff" opacity="0.3" transform="translate(0,48) scale(1,0.6)"/>
+        </svg>
+      </div>
+    </div>
+    <div class="size-strip" id="strip-3"></div>
+  </div>
+
+  <!-- ═══ 4. DASHBOARD PULSE ═══ -->
+  <div class="icon-card top-pick" id="icon-04">
+    <div class="icon-card-header">
+      <span class="num">4</span>
+      <span class="title">Dashboard Pulse</span>
+      <span class="desc">Scope</span>
+    </div>
+    <div class="icon-display">
+      <div class="hero">
+        <!-- Concentric rings + center dot — radar/scope aesthetic -->
+        <svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="g4" cx="0.5" cy="0.5" r="0.4">
+              <stop offset="0%" stop-color="#58a6ff"/>
+              <stop offset="100%" stop-color="#1d4ed8"/>
+            </radialGradient>
+          </defs>
+          <!-- Rings -->
+          <circle cx="128" cy="128" r="100" stroke="#58a6ff" stroke-width="3" opacity="0.08"/>
+          <circle cx="128" cy="128" r="76"  stroke="#58a6ff" stroke-width="3" opacity="0.12"/>
+          <circle cx="128" cy="128" r="52"  stroke="#58a6ff" stroke-width="3" opacity="0.2"/>
+          <circle cx="128" cy="128" r="28"  stroke="#58a6ff" stroke-width="4" opacity="0.35"/>
+          <!-- Crosshair -->
+          <line x1="28" y1="128" x2="228" y2="128" stroke="#58a6ff" stroke-width="2" opacity="0.06"/>
+          <line x1="128" y1="28" x2="128" y2="228" stroke="#58a6ff" stroke-width="2" opacity="0.06"/>
+          <!-- Pulse sweep (quadrant arc) -->
+          <path d="M128 52 A76 76 0 0 1 204 128" stroke="url(#g4)" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.9"/>
+          <!-- Center dot -->
+          <circle cx="128" cy="128" r="12" fill="url(#g4)"/>
+          <circle cx="128" cy="128" r="4" fill="#0a0a0a"/>
+          <!-- Data point on sweep -->
+          <circle cx="178" cy="92" r="8" fill="#58a6ff"/>
+          <circle cx="178" cy="92" r="3" fill="#fff"/>
+        </svg>
+      </div>
+    </div>
+    <div class="size-strip" id="strip-4"></div>
+  </div>
+
+  <!-- ═══ 5. NEXUS NODE ═══ -->
+  <div class="icon-card" id="icon-05">
+    <div class="icon-card-header">
+      <span class="num">5</span>
+      <span class="title">Nexus Node</span>
+      <span class="desc">Orbital</span>
+    </div>
+    <div class="icon-display">
+      <div class="hero">
+        <!-- Central node with 4 orbiting satellites on elliptical paths -->
+        <svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="g5" cx="0.5" cy="0.5" r="0.45">
+              <stop offset="0%" stop-color="#58a6ff"/>
+              <stop offset="100%" stop-color="#1e40af"/>
+            </radialGradient>
+          </defs>
+          <!-- Orbital paths (ellipses) -->
+          <ellipse cx="128" cy="128" rx="100" ry="36" stroke="#58a6ff" stroke-width="2" opacity="0.1"
+                   transform="rotate(-30 128 128)"/>
+          <ellipse cx="128" cy="128" rx="100" ry="36" stroke="#58a6ff" stroke-width="2" opacity="0.1"
+                   transform="rotate(60 128 128)"/>
+          <!-- Satellites (positioned on ellipses) -->
+          <!-- Orbit 1 (-30°): top-right and bottom-left -->
+          <circle cx="216" cy="82" r="12" fill="#58a6ff" opacity="0.65"/>
+          <circle cx="40" cy="174" r="12" fill="#58a6ff" opacity="0.65"/>
+          <!-- Orbit 2 (60°): top-left and bottom-right -->
+          <circle cx="40" cy="82" r="10" fill="#58a6ff" opacity="0.45"/>
+          <circle cx="216" cy="174" r="10" fill="#58a6ff" opacity="0.45"/>
+          <!-- Connecting dashed arcs -->
+          <path d="M216 82A100 36 0 0 0 40 174" stroke="#58a6ff" stroke-width="2" opacity="0.15"
+                transform="rotate(-30 128 128)" stroke-dasharray="6 8"/>
+          <!-- Central core -->
+          <circle cx="128" cy="128" r="40" fill="url(#g5)"/>
+          <circle cx="128" cy="128" r="16" fill="#0a0a0a"/>
+        </svg>
+      </div>
+    </div>
+    <div class="size-strip" id="strip-5"></div>
+  </div>
+
+  <!-- ═══ 6. CODE SHIELD ═══ -->
+  <div class="icon-card" id="icon-06">
+    <div class="icon-card-header">
+      <span class="num">6</span>
+      <span class="title">Code Shield</span>
+      <span class="desc">Security</span>
+    </div>
+    <div class="icon-display">
+      <div class="hero">
+        <!-- Shield shape enclosing angle brackets -->
+        <svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g6" x1="128" y1="0" x2="128" y2="256">
+              <stop offset="0%" stop-color="#58a6ff" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0.7"/>
+            </linearGradient>
+          </defs>
+          <!-- Shield outline -->
+          <path d="M128 36 L208 64v80c0 60-80 80-80 80S48 204 48 144V64z"
+                stroke="url(#g6)" stroke-width="12" stroke-linejoin="round" fill="none"/>
+          <!-- Shield fill subtle -->
+          <path d="M128 36 L208 64v80c0 60-80 80-80 80S48 204 48 144V64z"
+                fill="#58a6ff" opacity="0.08"/>
+          <!-- Angle brackets inside -->
+          <g stroke="#58a6ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9">
+            <path d="M100 100L70 128l30 28"/>
+            <path d="M156 100l30 28-30 28"/>
+          </g>
+          <!-- Center slash -->
+          <line x1="128" y1="96" x2="128" y2="160" stroke="#58a6ff" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
+        </svg>
+      </div>
+    </div>
+    <div class="size-strip" id="strip-6"></div>
+  </div>
+
+  <!-- ═══ 7. ASSEMBLY ═══ -->
+  <div class="icon-card top-pick" id="icon-07">
+    <div class="icon-card-header">
+      <span class="num">7</span>
+      <span class="title">Assembly</span>
+      <span class="desc">Overlay</span>
+    </div>
+    <div class="icon-display">
+      <div class="hero">
+        <!-- Overlapping translucent geometric primitives -->
+        <svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Background circle -->
+          <circle cx="128" cy="128" r="80" fill="#58a6ff" opacity="0.08"/>
+          <!-- Rotated square -->
+          <rect x="58" y="58" width="140" height="140" rx="24"
+                stroke="#58a6ff" stroke-width="6" fill="none" opacity="0.35"
+                transform="rotate(22 128 128)"/>
+          <!-- Diamond -->
+          <rect x="78" y="78" width="100" height="100" rx="12"
+                stroke="#58a6ff" stroke-width="6" fill="#58a6ff" fill-opacity="0.1"
+                transform="rotate(45 128 128)"/>
+          <!-- Triangle overlay -->
+          <polygon points="128,60 190,176 66,176"
+                   stroke="#58a6ff" stroke-width="5" stroke-linejoin="round"
+                   fill="#58a6ff" fill-opacity="0.07"/>
+          <!-- Center dot / pivot -->
+          <circle cx="128" cy="128" r="10" fill="#58a6ff"/>
+          <circle cx="128" cy="128" r="4" fill="#0a0a0a"/>
+        </svg>
+      </div>
+    </div>
+    <div class="size-strip" id="strip-7"></div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p class="note">
+    All icons designed at <strong>256×256</strong> viewBox · Accent <strong>#58A6FF</strong> · <strong>★ RECOMMENDED</strong>: Dashboard Pulse (#4) and Assembly (#7)<br>
+    Select your preferred icon, then generate corresponding <strong>.ico</strong> and <strong>.png</strong> formats for Electron packaging.
+  </p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     SIZE VARIANT RENDERER
+     ════════════════════════════════════════════════════════════════════ -->
+<script>
+// Each icon's SVG source (viewBox 256×256)
+const icons = {
+  1: `<svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g1" x1="0" y1="0" x2="256" y2="256"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient></defs><path d="M88 64C56 64 48 92 48 128c0 36 8 64 40 64" stroke="url(#g1)" stroke-width="36" stroke-linecap="round" fill="none"/><path d="M112 192V64l32 64 32-64v128" stroke="#58a6ff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.85"/></svg>`,
+  2: `<svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="g2" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#1d4ed8"/></radialGradient></defs><g stroke="#58a6ff" stroke-width="5" stroke-linecap="round" opacity="0.35"><line x1="128" y1="128" x2="128" y2="36"/><line x1="128" y1="128" x2="215" y2="78"/><line x1="128" y1="128" x2="215" y2="178"/><line x1="128" y1="128" x2="128" y2="220"/><line x1="128" y1="128" x2="41" y2="178"/><line x1="128" y1="128" x2="41" y2="78"/></g><circle cx="128" cy="36" r="14" fill="#58a6ff" opacity="0.7"/><circle cx="215" cy="78" r="14" fill="#58a6ff" opacity="0.7"/><circle cx="215" cy="178" r="14" fill="#58a6ff" opacity="0.7"/><circle cx="128" cy="220" r="14" fill="#58a6ff" opacity="0.7"/><circle cx="41" cy="178" r="14" fill="#58a6ff" opacity="0.7"/><circle cx="41" cy="78" r="14" fill="#58a6ff" opacity="0.7"/><circle cx="128" cy="128" r="36" fill="url(#g2)"/><circle cx="128" cy="128" r="14" fill="#0a0a0a"/></svg>`,
+  3: `<svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g3a" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#58a6ff" stop-opacity="0.9"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient></defs><g stroke="#58a6ff" stroke-width="4" opacity="0.2" stroke-linecap="round"><line x1="128" y1="52" x2="128" y2="204"/><line x1="56" y1="128" x2="200" y2="128"/></g><rect x="40" y="60" width="72" height="52" rx="12" fill="url(#g3a)"/><rect x="144" y="60" width="72" height="52" rx="12" fill="#58a6ff" opacity="0.6"/><rect x="40" y="132" width="72" height="52" rx="12" fill="#58a6ff" opacity="0.6"/><rect x="144" y="132" width="72" height="52" rx="12" fill="#58a6ff" opacity="0.85"/></svg>`,
+  4: `<svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="g4" cx="0.5" cy="0.5" r="0.4"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#1d4ed8"/></radialGradient></defs><circle cx="128" cy="128" r="100" stroke="#58a6ff" stroke-width="3" opacity="0.08"/><circle cx="128" cy="128" r="76" stroke="#58a6ff" stroke-width="3" opacity="0.12"/><circle cx="128" cy="128" r="52" stroke="#58a6ff" stroke-width="3" opacity="0.2"/><circle cx="128" cy="128" r="28" stroke="#58a6ff" stroke-width="4" opacity="0.35"/><line x1="28" y1="128" x2="228" y2="128" stroke="#58a6ff" stroke-width="2" opacity="0.06"/><line x1="128" y1="28" x2="128" y2="228" stroke="#58a6ff" stroke-width="2" opacity="0.06"/><path d="M128 52 A76 76 0 0 1 204 128" stroke="url(#g4)" stroke-width="6" stroke-linecap="round" fill="none" opacity="0.9"/><circle cx="128" cy="128" r="12" fill="url(#g4)"/><circle cx="128" cy="128" r="4" fill="#0a0a0a"/><circle cx="178" cy="92" r="8" fill="#58a6ff"/><circle cx="178" cy="92" r="3" fill="#fff"/></svg>`,
+  5: `<svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="g5" cx="0.5" cy="0.5" r="0.45"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#1e40af"/></radialGradient></defs><ellipse cx="128" cy="128" rx="100" ry="36" stroke="#58a6ff" stroke-width="2" opacity="0.1" transform="rotate(-30 128 128)"/><ellipse cx="128" cy="128" rx="100" ry="36" stroke="#58a6ff" stroke-width="2" opacity="0.1" transform="rotate(60 128 128)"/><circle cx="216" cy="82" r="12" fill="#58a6ff" opacity="0.65"/><circle cx="40" cy="174" r="12" fill="#58a6ff" opacity="0.65"/><circle cx="40" cy="82" r="10" fill="#58a6ff" opacity="0.45"/><circle cx="216" cy="174" r="10" fill="#58a6ff" opacity="0.45"/><circle cx="128" cy="128" r="40" fill="url(#g5)"/><circle cx="128" cy="128" r="16" fill="#0a0a0a"/></svg>`,
+  6: `<svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g6" x1="128" y1="0" x2="128" y2="256"><stop offset="0%" stop-color="#58a6ff" stop-opacity="0.9"/><stop offset="100%" stop-color="#1d4ed8" stop-opacity="0.7"/></linearGradient></defs><path d="M128 36 L208 64v80c0 60-80 80-80 80S48 204 48 144V64z" stroke="url(#g6)" stroke-width="12" stroke-linejoin="round" fill="none"/><path d="M128 36 L208 64v80c0 60-80 80-80 80S48 204 48 144V64z" fill="#58a6ff" opacity="0.08"/><g stroke="#58a6ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9"><path d="M100 100L70 128l30 28"/><path d="M156 100l30 28-30 28"/></g><line x1="128" y1="96" x2="128" y2="160" stroke="#58a6ff" stroke-width="5" stroke-linecap="round" opacity="0.35"/></svg>`,
+  7: `<svg viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="128" cy="128" r="80" fill="#58a6ff" opacity="0.08"/><rect x="58" y="58" width="140" height="140" rx="24" stroke="#58a6ff" stroke-width="6" fill="none" opacity="0.35" transform="rotate(22 128 128)"/><rect x="78" y="78" width="100" height="100" rx="12" stroke="#58a6ff" stroke-width="6" fill="#58a6ff" fill-opacity="0.1" transform="rotate(45 128 128)"/><polygon points="128,60 190,176 66,176" stroke="#58a6ff" stroke-width="5" stroke-linejoin="round" fill="#58a6ff" fill-opacity="0.07"/><circle cx="128" cy="128" r="10" fill="#58a6ff"/><circle cx="128" cy="128" r="4" fill="#0a0a0a"/></svg>`
+};
+
+const sizes = [16, 32, 48, 64, 256];
+
+// Render size strips for each icon
+for (let i = 1; i <= 7; i++) {
+  const strip = document.getElementById(`strip-${i}`);
+  if (!strip) continue;
+  const svgSrc = icons[i];
+  strip.innerHTML = sizes.map(sz => `
+    <div class="size-item">
+      <div class="sz-box" style="width:${sz+16}px;height:${sz+16}px">
+        ${svgSrc.replace('<svg viewBox', `<svg width="${sz}" height="${sz}" viewBox`)}
+      </div>
+      <span class="sz-label">${sz}px</span>
+    </div>
+  `).join('');
+}
+</script>
+
+</body>
+</html>

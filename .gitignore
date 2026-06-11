@@ -1,0 +1,32 @@
+# Dependencies
+electron/node_modules/
+
+# Build outputs
+electron/release/
+electron/dist-python/
+electron/build-tmp/
+electron/build-python/
+electron/asar-tmp/
+build/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude local config (contains user-specific paths and API keys)
+.claude/
+
+# Environment
+.env
+.env.local
