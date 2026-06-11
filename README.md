@@ -35,7 +35,7 @@ A local desktop GUI application for viewing and managing all Claude Code compone
 
 ### Download
 
-Go to [Releases](https://github.com/dongzhishuai/claude-manage/releases) and download the latest `Claude-Manage-v*-portable.zip`.
+Go to [Releases](https://github.com/Sisyphus776/claude-manage/releases) and download the latest `Claude-Manage-v*-portable.zip`.
 
 Unzip and double-click `Claude Manage.exe` to run. No installation required.
 
@@ -108,7 +108,7 @@ A: Currently Windows-only. The Electron shell and Python backend should work cro
 
 ### License
 
-MIT © 2026 董智帅
+MIT © 2026 Sisyphus776
 
 ---
 
@@ -141,7 +141,7 @@ MIT © 2026 董智帅
 
 ### 下载与使用
 
-前往 [Releases](https://github.com/dongzhishuai/claude-manage/releases) 下载最新版 `Claude-Manage-v*-portable.zip`。
+前往 [Releases](https://github.com/Sisyphus776/claude-manage/releases) 下载最新版 `Claude-Manage-v*-portable.zip`。
 
 解压后双击 `Claude Manage.exe` 即可运行。无需安装。
 
@@ -216,4 +216,4 @@ powershell Compress-Archive ...
 
 ### 许可证
 
-MIT © 2026 董智帅
+MIT © 2026 Sisyphus776

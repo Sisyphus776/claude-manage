@@ -3,9 +3,9 @@
   "version": "2.0.0",
   "description": "Claude Code configuration manager — desktop GUI",
   "main": "main.js",
-  "author": "董智帅",
+  "author": "Sisyphus776",
   "license": "MIT",
-  "repository": "https://github.com/dongzhishuai/claude-manage",
+  "repository": "https://github.com/Sisyphus776/claude-manage",
   "scripts": {
     "start": "electron .",
     "build:python": "cd .. && python -m PyInstaller electron/bridge.spec --distpath electron/dist-python --workpath electron/build-python --noconfirm",
